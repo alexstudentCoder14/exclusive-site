@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Winter Games Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  html,body{margin:0;overflow:hidden;background:#04070c;font-family:'Inter',sans-serif;}
+  #c{position:fixed;inset:0;display:block;}
+  .font-orbitron{font-family:'Orbitron',sans-serif;}
+  #hud-timer{font-variant-numeric:tabular-nums;}
+  ::selection{background:#38bdf8;color:#04070c;}
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<!-- HUB OVERLAY -->
+<div id="hub-ui" class="absolute inset-0 pointer-events-none">
+  <div class="pointer-events-auto absolute top-6 left-1/2 -translate-x-1/2 text-center">
+    <h1 class="font-orbitron font-900 text-3xl md:text-4xl text-white tracking-[0.2em]" style="text-shadow:0 2px 20px rgba(0,0,0,.6)">WINTER&nbsp;GAMES&nbsp;ARENA</h1>
+    <p class="text-cyan-200/90 text-sm mt-2 tracking-wide">Click an arena on the mountain to open it</p>
+  </div>
+  <div class="pointer-events-auto absolute bottom-5 left-1/2 -translate-x-1/2 text-center text-slate-300/80 text-xs max-w-md px-4">
+    Downhill · Slalom · Moguls · Ski Jumping · Halfpipe · Big Air — six full events, each with its own controls, AI bots and Olympic scoring.
+  </div>
+</div>
+
+<!-- EVENT SELECT MODAL -->
+<div id="modal-ui" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-20">
+  <div class="bg-slate-900 border border-cyan-400/40 rounded-2xl p-6 w-[22rem] text-white shadow-2xl">
+    <h2 id="modal-title" class="font-orbitron font-700 text-xl mb-5 text-cyan-300 tracking-wide"></h2>
+
+    <p class="text-xs uppercase tracking-wider text-slate-400 mb-2">Mode</p>
+    <div class="flex gap-2 mb-5">
+      <button data-mode="single" class="mode-btn flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-cyan-400 transition text-sm">Single Player<br><span class="text-[10px] text-slate-400">vs AI Bots</span></button>
+      <button data-mode="multi" class="mode-btn flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-cyan-400 transition text-sm">Multiplayer<br><span class="text-[10px] text-slate-400">Local / Simulated</span></button>
+    </div>
+
+    <p class="text-xs uppercase tracking-wider text-slate-400 mb-2">Bot Difficulty</p>
+    <div class="flex gap-2 mb-6">
+      <button data-diff="easy" class="diff-btn flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-green-400 transition text-xs">Easy</button>
+      <button data-diff="medium" class="diff-btn flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-yellow-400 transition text-xs">Medium</button>
+      <button data-diff="champion" class="diff-btn flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-red-400 transition text-xs">Olympic<br>Champion</button>
+    </div>
+
+    <div class="flex gap-2">
+      <button id="startBtn" class="flex-1 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold transition">Start Event</button>
+      <button id="cancelBtn" class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- IN-EVENT HUD -->
+<div id="hud-ui" class="hidden absolute inset-0 pointer-events-none">
+  <div class="absolute top-4 left-4 bg-slate-900/70 backdrop-blur rounded-xl p-3 text-white min-w-[13rem]">
+    <div id="hud-event" class="text-cyan-300 text-[11px] tracking-wider uppercase"></div>
+    <div id="hud-timer" class="font-orbitron text-2xl leading-tight mt-0.5"></div>
+    <div id="hud-extra" class="text-xs text-slate-300 mt-1"></div>
+  </div>
+  <div id="hud-controls" class="absolute top-4 right-4 bg-slate-900/70 backdrop-blur rounded-xl p-3 text-white text-xs max-w-[13rem] leading-relaxed"></div>
+  <div id="hud-status" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/70 backdrop-blur rounded-full px-4 py-1.5 text-slate-300 text-xs"></div>
+</div>
+
+<!-- SCOREBOARD -->
+<div id="scoreboard-ui" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-20">
+  <div class="bg-slate-900 border border-cyan-400/40 rounded-2xl p-6 w-96 text-white shadow-2xl">
+    <h2 class="font-orbitron font-700 text-xl mb-1 text-cyan-300 text-center tracking-widest">RESULTS</h2>
+    <p id="score-event" class="text-center text-xs text-slate-400 mb-4"></p>
+    <table class="w-full text-sm mb-5"><tbody id="score-rows"></tbody></table>
+    <div class="flex gap-2">
+      <button id="retryBtn" class="flex-1 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold transition">Retry</button>
+      <button id="hubBtn" class="flex-1 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition">Back to Hub</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   CONFIG
+   ========================================================================= */
+const EVENTS = {
+  downhill: {label:'Downhill Track', type:'alpine', mode:'downhill', length:900, slope:0.30, baselineTime:74},
+  slalom:   {label:'Slalom Run',     type:'alpine', mode:'slalom',   length:420, slope:0.22, baselineTime:50, gateCount:14},
+  moguls:   {label:'Moguls Run',     type:'moguls',                  length:320, slope:0.25, baselineScore:88},
+  skijump:  {label:'Ski Jumping Hill', type:'skijump', rampLength:90, baselineDistance:132, baselineStyle:18.2},
+  halfpipe: {label:'Halfpipe',       type:'freestyle', approach:40, baselineScore:87},
+  bigair:   {label:'Big Air Arena',  type:'freestyle', approach:50, baselineScore:84}
+};
+const EVENT_COLOR = {downhill:0x3b82f6, slalom:0xef4444, moguls:0x22c55e, skijump:0xf97316, halfpipe:0xa855f7, bigair:0x06b6d4};
+const TRACK_HALF_WIDTH = 6;
+
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function fmtTime(t){
+  if(!isFinite(t)) return 'DNF';
+  const m = Math.floor(t/60); const s = t - m*60;
+  return `${m}:${s.toFixed(3).padStart(6,'0')}`;
+}
+
+let game = {state:'HUB', eventKey:null, mode:'single', difficulty:'medium', _botResults:null, _botDuration:8};
+
+/* =========================================================================
+   INPUT HANDLER
+   ========================================================================= */
+const KEYS = new Set();
+window.addEventListener('keydown', e=>{
+  KEYS.add(e.code);
+  if(e.code==='Space') e.preventDefault();
+  if(e.code==='Escape' && game.state==='PLAYING') goHub();
+});
+window.addEventListener('keyup', e=>KEYS.delete(e.code));
+
+/* =========================================================================
+   SOUND CONTROLLER (mocked — simple WebAudio beeps, no asset files)
+   ========================================================================= */
+const SoundController = {
+  ctx: null,
+  ensure(){ if(!this.ctx){ try{ this.ctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } },
+  beep(freq=440, dur=0.08, type='sine', vol=0.15){
+    this.ensure(); if(!this.ctx) return;
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(); o.stop(this.ctx.currentTime+dur);
+  },
+  gate(){ this.beep(880,0.05,'square',0.10); },
+  penalty(){ this.beep(180,0.25,'sawtooth',0.15); },
+  launch(){ this.beep(600,0.15,'triangle',0.20); },
+  land(){ this.beep(320,0.2,'sine',0.20); },
+  crash(){ this.beep(110,0.4,'sawtooth',0.25); },
+  finish(){ this.beep(1000,0.3,'sine',0.20); }
+};
+
+/* =========================================================================
+   THREE.JS SETUP
+   ========================================================================= */
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xbfe3f5);
+scene.fog = new THREE.Fog(0xbfe3f5, 60, 420);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+function resize(){
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+}
+resize();
+window.addEventListener('resize', resize);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.0));
+const sun = new THREE.DirectionalLight(0xffffff, 1.15);
+sun.position.set(40,70,20);
+scene.add(sun);
+
+const dynamicGroup = new THREE.Group();
+scene.add(dynamicGroup);
+function clearDynamic(){
+  while(dynamicGroup.children.length) dynamicGroup.remove(dynamicGroup.children[0]);
+}
+
+function makeTextSprite(text){
+  const cvs=document.createElement('canvas'); cvs.width=256; cvs.height=96;
+  const ctx=cvs.getContext('2d');
+  ctx.fillStyle='rgba(15,23,42,0.85)';
+  ctx.fillRect(0,0,256,96);
+  ctx.fillStyle='#ffffff';
+  ctx.font='bold 26px Arial';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,128,48);
+  const tex = new THREE.CanvasTexture(cvs);
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true}));
+  spr.scale.set(6,2.2,1);
+  return spr;
+}
+
+/* =========================================================================
+   HUB SCENE
+   ========================================================================= */
+const EVENT_KEYS = Object.keys(EVENTS);
+let hubMarkers = [];
+let hubAngle = 0;
+
+function buildHub(){
+  clearDynamic();
+  hubMarkers = [];
+
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(60,64), new THREE.MeshStandardMaterial({color:0xf3f8ff}));
+  ground.rotation.x = -Math.PI/2;
+  dynamicGroup.add(ground);
+
+  for(let i=0;i<10;i++){
+    const h = 20+Math.random()*30;
+    const m = new THREE.Mesh(new THREE.ConeGeometry(10+Math.random()*8, h, 5), new THREE.MeshStandardMaterial({color:0xe2e8f0}));
+    const ang = Math.random()*Math.PI*2, rad = 72+Math.random()*30;
+    m.position.set(Math.cos(ang)*rad, h/2-2, Math.sin(ang)*rad);
+    dynamicGroup.add(m);
+  }
+
+  EVENT_KEYS.forEach((key,i)=>{
+    const ang = (i/EVENT_KEYS.length)*Math.PI*2;
+    const rad = 22;
+    const group = new THREE.Group();
+    group.position.set(Math.cos(ang)*rad, 0, Math.sin(ang)*rad);
+
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,4,8), new THREE.MeshStandardMaterial({color:0x334155}));
+    pole.position.y=2;
+    group.add(pole);
+
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(4,2.4,0.3), new THREE.MeshStandardMaterial({color:EVENT_COLOR[key]}));
+    sign.position.y=4.5;
+    group.add(sign);
+
+    const label = makeTextSprite(EVENTS[key].label.toUpperCase());
+    label.position.y=7.2;
+    group.add(label);
+
+    group.traverse(o=>{ o.userData.eventKey = key; });
+    dynamicGroup.add(group);
+    hubMarkers.push(group);
+  });
+
+  camera.position.set(0,26,42);
+  camera.lookAt(0,4,0);
+}
+
+function updateHub(dt){
+  hubAngle += dt*0.06;
+  camera.position.x = Math.sin(hubAngle)*42;
+  camera.position.z = Math.cos(hubAngle)*42;
+  camera.position.y = 26;
+  camera.lookAt(0,4,0);
+}
+
+const raycaster = new THREE.Raycaster();
+const mouseNdc = new THREE.Vector2();
+canvas.addEventListener('click', (e)=>{
+  if(game.state!=='HUB') return;
+  mouseNdc.x = (e.clientX/window.innerWidth)*2-1;
+  mouseNdc.y = -(e.clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouseNdc, camera);
+  const hits = raycaster.intersectObjects(hubMarkers, true);
+  if(hits.length){
+    const key = hits[0].object.userData.eventKey;
+    if(key) openModal(key);
+  }
+});
+
+/* =========================================================================
+   MODAL
+   ========================================================================= */
+let modalSelection = {mode:'single', diff:'medium'};
+function openModal(key){
+  game.eventKey = key;
+  document.getElementById('modal-title').textContent = EVENTS[key].label;
+  document.getElementById('modal-ui').classList.remove('hidden');
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('border-cyan-400', b.dataset.mode===modalSelection.mode));
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('border-cyan-400', b.dataset.diff===modalSelection.diff));
+}
+document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>{
+  modalSelection.mode=b.dataset.mode;
+  document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('border-cyan-400'));
+  b.classList.add('border-cyan-400');
+}));
+document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=>{
+  modalSelection.diff=b.dataset.diff;
+  document.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('border-cyan-400'));
+  b.classList.add('border-cyan-400');
+}));
+document.getElementById('cancelBtn').addEventListener('click',()=>document.getElementById('modal-ui').classList.add('hidden'));
+document.getElementById('startBtn').addEventListener('click',()=>{
+  game.mode = modalSelection.mode;
+  game.difficulty = modalSelection.diff;
+  document.getElementById('modal-ui').classList.add('hidden');
+  startEvent(game.eventKey, game.mode, game.difficulty);
+});
+
+/* =========================================================================
+   AI SYSTEM
+   ========================================================================= */
+const AISystem = {
+  varianceRange(diff){
+    if(diff==='easy') return [0.10,0.22];
+    if(diff==='medium') return [0.02,0.09];
+    return [-0.02,0.015];
+  },
+  botNames(){ return ['Bot Anya','Bot Lukas','Bot Sora']; },
+  generate(eventKey, diff){
+    const ev = EVENTS[eventKey];
+    const [lo,hi] = this.varianceRange(diff);
+    return this.botNames().map(name=>{
+      const v = lo + Math.random()*(hi-lo);
+      if(ev.type==='alpine'){
+        let time = ev.baselineTime*(1+Math.max(v,0));
+        if(v<0) time = ev.baselineTime*(1+v);
+        if(ev.mode==='slalom'){
+          const missChance = diff==='easy'?0.35:diff==='medium'?0.12:0.02;
+          let misses=0;
+          for(let i=0;i<ev.gateCount;i++){ if(Math.random()<missChance*0.4) misses++; }
+          time += misses*2.0;
+        }
+        let dnf = (diff==='easy' && Math.random()<0.07);
+        return {name, metric: dnf?Infinity:time, display: dnf?'DNF':fmtTime(time), lowerBetter:true};
+      }
+      if(ev.type==='moguls'){
+        let score = ev.baselineScore*(1-Math.max(v,0));
+        if(v<0) score = ev.baselineScore*(1-v);
+        score = clamp(score,20,100);
+        return {name, metric:score, display:score.toFixed(1), lowerBetter:false};
+      }
+      if(ev.type==='skijump'){
+        let dist = ev.baselineDistance*(1-Math.max(v,0));
+        if(v<0) dist = ev.baselineDistance*(1-v);
+        let style = ev.baselineStyle*(1-Math.max(v,0)*1.2);
+        if(v<0) style = ev.baselineStyle*(1-v*1.2);
+        style = clamp(style,8,20);
+        const metric = dist*2 + style;
+        return {name, metric, display:`${dist.toFixed(1)}m · ${style.toFixed(1)}pts`, lowerBetter:false};
+      }
+      // freestyle
+      let score = ev.baselineScore*(1-Math.max(v,0));
+      if(v<0) score = ev.baselineScore*(1-v);
+      score = clamp(score,20,100);
+      return {name, metric:score, display:score.toFixed(1), lowerBetter:false};
+    });
+  }
+};
+
+/* =========================================================================
+   SCORING / RESULTS
+   ========================================================================= */
+function showScoreboard(playerResult){
+  const ev = EVENTS[game.eventKey];
+  const bots = game._botResults || [];
+  const all = [{name:'YOU', metric:playerResult.metric, display:playerResult.display, lowerBetter:playerResult.lowerBetter, you:true}, ...bots];
+  all.sort((a,b)=> a.lowerBetter ? (a.metric-b.metric) : (b.metric-a.metric));
+  const rows = document.getElementById('score-rows');
+  rows.innerHTML='';
+  const medals=['🥇','🥈','🥉'];
+  all.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.className = r.you? 'bg-cyan-500/10' : '';
+    tr.innerHTML = `<td class="py-1.5 px-2 w-8">${medals[i]||''}</td><td class="py-1.5 px-2 font-semibold ${r.you?'text-cyan-300':'text-slate-200'}">${r.name}</td><td class="py-1.5 px-2 text-right text-slate-300">${r.display}</td>`;
+    rows.appendChild(tr);
+  });
+  document.getElementById('score-event').textContent = ev.label;
+  document.getElementById('scoreboard-ui').classList.remove('hidden');
+  document.getElementById('hud-ui').classList.add('hidden');
+  SoundController.finish();
+  game.state='SCOREBOARD';
+}
+document.getElementById('retryBtn').addEventListener('click',()=>{
+  document.getElementById('scoreboard-ui').classList.add('hidden');
+  startEvent(game.eventKey, game.mode, game.difficulty);
+});
+document.getElementById('hubBtn').addEventListener('click',()=>{
+  document.getElementById('scoreboard-ui').classList.add('hidden');
+  goHub();
+});
+function goHub(){
+  game.state='HUB';
+  document.getElementById('hud-ui').classList.add('hidden');
+  document.getElementById('modal-ui').classList.add('hidden');
+  document.getElementById('scoreboard-ui').classList.add('hidden');
+  document.getElementById('hub-ui').classList.remove('hidden');
+  buildHub();
+}
+
+/* =========================================================================
+   EVENT LIFECYCLE
+   ========================================================================= */
+let R = null;
+
+function controlsText(key){
+  const ev = EVENTS[key];
+  if(ev.type==='alpine') return 'A / D — Carve<br>W (hold) — Aero Tuck<br>S (hold) — Snowplow Brake';
+  if(ev.type==='moguls') return 'A / D — Carve<br>W (hold) — Tuck · S — Brake<br>SPACE / SHIFT at kickers — grab air';
+  if(ev.type==='skijump') return 'Hold W on the inrun<br>SPACE at the ramp lip — launch<br>Q / E — pitch up/down in flight<br>A / D — correct roll<br>SPACE again just before landing';
+  return 'SPACE at the kicker — pop<br>W / S — front/back flip<br>A / D — spin<br>Q / E — corkscrew<br>Hold SHIFT — grab (style, slower spin)';
+}
+
+function startEvent(key, mode, diff){
+  game.state='PLAYING';
+  document.getElementById('hub-ui').classList.add('hidden');
+  document.getElementById('hud-ui').classList.remove('hidden');
+  document.getElementById('hud-event').textContent = `${EVENTS[key].label} — ${mode==='multi'?'Multiplayer':'Single Player'} / ${diff}`;
+  document.getElementById('hud-controls').innerHTML = controlsText(key);
+  document.getElementById('hud-status').textContent = 'ESC — return to hub anytime';
+  game._botResults = AISystem.generate(key, diff);
+  game._botDuration = estimateBotDuration(key);
+  buildEventScene(key);
+}
+function estimateBotDuration(key){
+  const ev = EVENTS[key];
+  if(ev.type==='alpine') return ev.baselineTime*1.1;
+  if(ev.type==='moguls') return 24;
+  if(ev.type==='skijump') return 9;
+  return 7;
+}
+
+function buildEventScene(key){
+  const ev = EVENTS[key];
+  R = {key, ev, time:0, finished:false, _ghostElapsed:0};
+  if(ev.type==='alpine' || ev.type==='moguls'){
+    Object.assign(R, {x:0,s:0,speed:0,lateralVel:0,carveHold:0,penalties:0,dnf:false,gateIdx:0,bumpIdx:0,turnScore:50,airScore:0});
+    buildSlopeScene(key);
+  } else if(ev.type==='skijump'){
+    Object.assign(R, {phase:'inrun', s:0, speed:0, pitch:0, pitchHoldTime:0, stalled:false, tookOff:false,
+      vz:0, vy:0, fz:0, fy:0, rollCorrection:0, flightTime:0, lastSpaceFlightTime:-10, telemark:false});
+    buildSkiJumpVisual(key);
+  } else {
+    Object.assign(R, {phase:'approach', s:0, speed:14, popped:false, vy:0, y:0,
+      pitchDeg:0, yawDeg:0, rollDeg:0, grabDuration:0, peakY:0, popQuality:0});
+    buildFreestyleVisual(key);
+  }
+  spawnGhosts();
+}
+
+function spawnGhosts(){
+  R.ghosts=[];
+  [0xf87171,0xfacc15,0x34d399].forEach(c=>{
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.6,12,12), new THREE.MeshStandardMaterial({color:c}));
+    dynamicGroup.add(m);
+    R.ghosts.push(m);
+  });
+}
+function updateGhosts(dt){
+  R._ghostElapsed += dt;
+  const ev = R.ev;
+  const frac = clamp(R._ghostElapsed/game._botDuration, 0, 1);
+  R.ghosts.forEach((m,i)=>{
+    const lane = (i-1)*2.2;
+    if(ev.type==='alpine' || ev.type==='moguls'){
+      const gs = frac*ev.length;
+      m.position.set(lane, -gs*ev.slope+0.8, -gs);
+    } else if(ev.type==='skijump'){
+      m.position.set(lane, 8*Math.sin(frac*Math.PI), -frac*130);
+    } else {
+      m.position.set(lane, 6*Math.sin(frac*Math.PI), -frac*70);
+    }
+  });
+}
+
+/* =========================================================================
+   SLOPE SCENE (Downhill / Slalom / Moguls) — build
+   ========================================================================= */
+function buildSlopeScene(key){
+  clearDynamic();
+  const ev = EVENTS[key];
+  const length = ev.length;
+
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, length+60), new THREE.MeshStandardMaterial({color:0xf5faff}));
+  ground.rotation.x = -Math.PI/2 + Math.atan(ev.slope);
+  ground.position.set(0, -(length/2)*ev.slope, -length/2);
+  dynamicGroup.add(ground);
+
+  for(let s=0; s<=length; s+=20){
+    const wy = -s*ev.slope;
+    [-TRACK_HALF_WIDTH, TRACK_HALF_WIDTH].forEach(side=>{
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,2.4,6), new THREE.MeshStandardMaterial({color:0x1e293b}));
+      pole.position.set(side, wy+1.2, -s);
+      dynamicGroup.add(pole);
+    });
+  }
+
+  R.gates=[]; R.bumps=[]; R.kickers=[];
+
+  if(ev.mode==='slalom'){
+    const n = ev.gateCount;
+    for(let i=0;i<n;i++){
+      const s = (i+1)*(length/(n+1));
+      const centerX = Math.sin(i*1.4)*3.2;
+      const color = i%2===0 ? 0x3b82f6 : 0xef4444;
+      R.gates.push({s, centerX});
+      const wy = -s*ev.slope;
+      [-1.6,1.6].forEach(off=>{
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,2.6,6), new THREE.MeshStandardMaterial({color}));
+        post.position.set(centerX+off, wy+1.3, -s);
+        dynamicGroup.add(post);
+      });
+    }
+  }
+
+  if(ev.type==='moguls'){
+    const zoneCount = Math.floor(length/15);
+    for(let i=1;i<=zoneCount;i++){
+      const s = i*15;
+      const bx = Math.sin(i*0.9)*3;
+      R.bumps.push({s, x:bx});
+      const wy = -s*ev.slope;
+      const bump = new THREE.Mesh(new THREE.SphereGeometry(1.1,10,10), new THREE.MeshStandardMaterial({color:0xdfeeff}));
+      bump.position.set(bx, wy+0.5, -s);
+      bump.scale.y = 0.5;
+      dynamicGroup.add(bump);
+    }
+    [length*0.4, length*0.75].forEach(s=>{
+      R.kickers.push({s, done:false});
+      const wy = -s*ev.slope;
+      const kick = new THREE.Mesh(new THREE.BoxGeometry(4,0.6,3), new THREE.MeshStandardMaterial({color:0xf97316}));
+      kick.position.set(0, wy+1, -s);
+      kick.rotation.x = -0.3;
+      dynamicGroup.add(kick);
+    });
+  }
+
+  if(ev.mode==='downhill'){
+    [length/3, 2*length/3].forEach(s=>{
+      const wy = -s*ev.slope;
+      const banner = new THREE.Mesh(new THREE.BoxGeometry(TRACK_HALF_WIDTH*2,1,0.2), new THREE.MeshStandardMaterial({color:0x0ea5e9}));
+      banner.position.set(0, wy+3, -s);
+      dynamicGroup.add(banner);
+    });
+  }
+
+  const finishWy = -length*ev.slope;
+  const finish = new THREE.Mesh(new THREE.BoxGeometry(TRACK_HALF_WIDTH*2,1.4,0.3), new THREE.MeshStandardMaterial({color:0xef4444}));
+  finish.position.set(0, finishWy+3.5, -length);
+  dynamicGroup.add(finish);
+
+  const player = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.ConeGeometry(0.6,1.6,8), new THREE.MeshStandardMaterial({color:0x0ea5e9}));
+  body.rotation.x = Math.PI/2;
+  player.add(body);
+  player.position.set(0,1.2,0);
+  dynamicGroup.add(player);
+  R.playerMesh = player;
+
+  camera.position.set(0,6,10);
+}
+
+/* =========================================================================
+   SLOPE SCENE — update
+   ========================================================================= */
+function updateAlpineLike(dt){
+  const ev = R.ev;
+  const carveDir = (KEYS.has('KeyA')?-1:0) + (KEYS.has('KeyD')?1:0);
+  const tuck = KEYS.has('KeyW');
+  const brake = KEYS.has('KeyS');
+
+  R.carveHold = carveDir!==0 ? (R.carveHold||0)+dt : 0;
+  const agility = tuck?0.4:1;
+  const sharpness = carveDir * Math.min(R.carveHold/0.8,1) * agility;
+
+  R.lateralVel += sharpness*10*dt;
+  R.lateralVel *= 0.92;
+  R.x = clamp(R.x + R.lateralVel*dt, -TRACK_HALF_WIDTH, TRACK_HALF_WIDTH);
+
+  const baseDrag = 0.0018;
+  const drag = tuck ? baseDrag*0.6 : baseDrag;
+  const gravityAccel = 9.0*ev.slope*10;
+  let accel = gravityAccel - drag*R.speed*R.speed - Math.abs(sharpness)*3.0;
+  if(brake) accel -= 14;
+  R.speed = clamp(R.speed + accel*dt, 0, tuck?46:34);
+
+  R.s += R.speed*dt;
+  R.time += dt;
+
+  if(Math.abs(R.x) >= TRACK_HALF_WIDTH-0.1 && !R.dnf){
+    R.dnf = true;
+    SoundController.crash();
+  }
+
+  if(ev.mode==='slalom'){
+    while(R.gateIdx < R.gates.length && R.s >= R.gates[R.gateIdx].s){
+      const g = R.gates[R.gateIdx];
+      if(Math.abs(R.x-g.centerX) > 1.7){ R.penalties += 2.0; SoundController.penalty(); }
+      else SoundController.gate();
+      R.gateIdx++;
+    }
+  }
+
+  if(ev.type==='moguls') updateMogulsExtra();
+
+  const wy = -R.s*ev.slope;
+  R.playerMesh.position.set(R.x, wy+1.2, -R.s);
+  R.playerMesh.rotation.z = -R.lateralVel*0.05;
+
+  updateChaseCamera(R.playerMesh.position, R.speed);
+  updateHUDAlpine();
+
+  if(R.s >= ev.length || R.dnf) finishAlpine();
+}
+
+function updateMogulsExtra(){
+  while(R.bumpIdx < R.bumps.length && R.s >= R.bumps[R.bumpIdx].s){
+    const b = R.bumps[R.bumpIdx];
+    if(Math.abs(R.x-b.x) < 0.9){
+      R.turnScore = Math.max(0, R.turnScore - (50/R.bumps.length)*1.4);
+      SoundController.penalty();
+    }
+    R.bumpIdx++;
+  }
+  R.kickers.forEach(k=>{
+    if(!k.done && R.s>=k.s){
+      k.done = true;
+      const grab = KEYS.has('Space');
+      const style = KEYS.has('ShiftLeft')||KEYS.has('ShiftRight');
+      R.airScore = Math.min(25, R.airScore + 8 + (grab?4:0) + (style?3:0));
+      SoundController.launch();
+    }
+  });
+}
+
+function updateHUDAlpine(){
+  document.getElementById('hud-timer').textContent = fmtTime(R.time);
+  const ev = R.ev;
+  let extra = `Speed ${R.speed.toFixed(0)} · `;
+  if(ev.mode==='slalom') extra += `Penalty +${R.penalties.toFixed(1)}s`;
+  else if(ev.type==='moguls') extra += `Turns ${R.turnScore.toFixed(0)} · Air ${R.airScore.toFixed(0)}`;
+  else extra += R.dnf ? 'OUT OF BOUNDS — DNF' : 'Stay on the piste';
+  document.getElementById('hud-extra').textContent = extra;
+}
+
+function finishAlpine(){
+  if(R.finished) return;
+  R.finished = true;
+  const ev = R.ev;
+  if(ev.type==='alpine'){
+    const finalTime = R.dnf ? Infinity : R.time + R.penalties;
+    showScoreboard({metric:finalTime, display:R.dnf?'DNF':fmtTime(finalTime), lowerBetter:true});
+  } else {
+    const idealTime = ev.length/28;
+    const speedScore = clamp(25*idealTime/R.time, 0, 25);
+    const total = clamp(R.turnScore + R.airScore + speedScore, 0, 100);
+    showScoreboard({metric:total, display:total.toFixed(1), lowerBetter:false});
+  }
+}
+
+/* =========================================================================
+   SKI JUMP — build & update
+   ========================================================================= */
+function buildSkiJumpVisual(key){
+  clearDynamic();
+  R.rampAngle = 0.62;
+  R.landingAngle = 0.5;
+  R.rampLength = EVENTS[key].rampLength;
+
+  const ramp = new THREE.Mesh(new THREE.PlaneGeometry(6, R.rampLength), new THREE.MeshStandardMaterial({color:0xeaf3ff}));
+  ramp.rotation.x = -Math.PI/2 + R.rampAngle;
+  ramp.position.set(0, -(R.rampLength/2)*Math.tan(R.rampAngle), -R.rampLength/2);
+  dynamicGroup.add(ramp);
+
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(3,14,3), new THREE.MeshStandardMaterial({color:0x475569}));
+  tower.position.set(0, 7, 4);
+  dynamicGroup.add(tower);
+
+  const takeoffWy = -R.rampLength*Math.tan(R.rampAngle);
+  R.takeoffWy = takeoffWy;
+  const landingLength = 150;
+  const land = new THREE.Mesh(new THREE.PlaneGeometry(16, landingLength), new THREE.MeshStandardMaterial({color:0xf5faff}));
+  land.rotation.x = -Math.PI/2 + R.landingAngle;
+  land.position.set(0, takeoffWy-(landingLength/2)*Math.tan(R.landingAngle), -R.rampLength-landingLength/2);
+  dynamicGroup.add(land);
+
+  for(let d=10; d<landingLength; d+=15){
+    const wy = takeoffWy - d*Math.tan(R.landingAngle);
+    [-6,6].forEach(x=>{
+      const flag = new THREE.Mesh(new THREE.ConeGeometry(0.3,1,6), new THREE.MeshStandardMaterial({color: (d%30<15)?0x3b82f6:0xef4444}));
+      flag.position.set(x, wy+0.6, -R.rampLength-d);
+      dynamicGroup.add(flag);
+    });
+  }
+
+  const player = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.ConeGeometry(0.5,1.4,8), new THREE.MeshStandardMaterial({color:0xf97316}));
+  body.rotation.x = Math.PI/2;
+  player.add(body);
+  player.position.set(0,2,0);
+  dynamicGroup.add(player);
+  R.playerMesh = player;
+
+  camera.position.set(0,10,14);
+}
+
+function updateSkiJump(dt){
+  if(R.phase==='inrun'){
+    const tuck = KEYS.has('KeyW');
+    const drag = tuck?0.0009:0.0015;
+    const g = 9.0*Math.tan(R.rampAngle)*10;
+    R.speed = clamp(R.speed + (g - drag*R.speed*R.speed)*dt, 0, tuck?44:36);
+    R.s += R.speed*dt;
+
+    const wy = -R.s*Math.tan(R.rampAngle);
+    R.playerMesh.position.set(0, wy+1.2, -R.s);
+    updateChaseCamera(R.playerMesh.position, R.speed);
+
+    if(KEYS.has('Space') && !R.tookOff){
+      const dist = Math.abs(R.rampLength-R.s);
+      R.launchQuality = 0.5 + clamp(1-dist/6,0,1)*0.5;
+      takeOff();
+    } else if(R.s>=R.rampLength && !R.tookOff){
+      R.launchQuality = 0.4;
+      takeOff();
+    }
+
+    document.getElementById('hud-timer').textContent = R.speed.toFixed(1)+' km/h';
+    document.getElementById('hud-extra').textContent = 'INRUN — hold W to tuck, SPACE at the lip';
+  } else if(R.phase==='flight'){
+    R.flightTime += dt;
+    const pitchInput = KEYS.has('KeyQ')?1:(KEYS.has('KeyE')?-1:0);
+    R.pitch = clamp(R.pitch + pitchInput*dt*1.1, 0, 1);
+    if(R.pitch>0.82){ R.pitchHoldTime += dt; if(R.pitchHoldTime>1.5) R.stalled=true; } else R.pitchHoldTime=0;
+
+    const lift = R.stalled ? 0 : R.pitch*5.2;
+    R.vy += (-9.2+lift)*dt;
+    if(pitchInput<0) R.vz += 3*dt;
+    const rollInput = (KEYS.has('KeyD')?1:(KEYS.has('KeyA')?-1:0));
+    R.rollCorrection += rollInput*dt*0.5;
+    if(KEYS.has('Space')) R.lastSpaceFlightTime = R.flightTime;
+
+    R.fz += R.vz*dt;
+    R.fy += R.vy*dt;
+
+    const worldZ = -R.rampLength - R.fz;
+    const worldY = R.takeoffWy - R.fz*Math.tan(R.landingAngle) + R.fy;
+    R.playerMesh.position.set(R.rollCorrection*2, worldY, worldZ);
+    R.playerMesh.rotation.z = R.rollCorrection*0.6;
+    updateChaseCamera(R.playerMesh.position, R.vz);
+
+    document.getElementById('hud-timer').textContent = R.fz.toFixed(1)+' m';
+    document.getElementById('hud-extra').textContent = R.stalled ? 'STALLED!' : 'FLIGHT — Q pitch up · E dive · A/D roll';
+
+    if(R.fy<=0) landSkiJump();
+  }
+}
+function takeOff(){
+  R.tookOff = true;
+  R.phase = 'flight';
+  R.vz = R.speed*0.42;
+  R.vy = 6+R.launchQuality*6;
+  SoundController.launch();
+}
+function landSkiJump(){
+  if(R.finished) return;
+  R.telemark = (R.flightTime - R.lastSpaceFlightTime) < 0.18;
+  const distance = Math.max(0, R.fz);
+  const stability = Math.max(0, 1-(Math.abs(R.pitch-0.55)+Math.abs(R.rollCorrection)*0.5));
+  const judges = [];
+  for(let i=0;i<5;i++){
+    let sc = 12 + stability*6 + (R.telemark?1.2:0) + (Math.random()*2-1);
+    if(R.stalled) sc -= 3;
+    judges.push(clamp(sc,4,20));
+  }
+  SoundController.land();
+  R.finished = true;
+  const sorted = [...judges].sort((a,b)=>a-b);
+  const styleAvg = sorted.slice(1,4).reduce((a,b)=>a+b,0)/3;
+  const metric = distance*2 + styleAvg;
+  showScoreboard({metric, display:`${distance.toFixed(1)}m · ${styleAvg.toFixed(1)}pts`, lowerBetter:false});
+}
+
+/* =========================================================================
+   FREESTYLE (Halfpipe / Big Air) — build & update
+   ========================================================================= */
+function buildFreestyleVisual(key){
+  clearDynamic();
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(20,120), new THREE.MeshStandardMaterial({color:0xf5faff}));
+  ground.rotation.x = -Math.PI/2;
+  ground.position.set(0,0,-40);
+  dynamicGroup.add(ground);
+
+  const kickerS = EVENTS[key].approach;
+  R.kickerS = kickerS;
+  const kicker = new THREE.Mesh(new THREE.BoxGeometry(5,2,4), new THREE.MeshStandardMaterial({color:0x0ea5e9}));
+  kicker.position.set(0,1,-kickerS);
+  kicker.rotation.x = -0.5;
+  dynamicGroup.add(kicker);
+
+  if(key==='halfpipe'){
+    for(let i=0;i<6;i++){
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(0.6,4,6), new THREE.MeshStandardMaterial({color:0xdbeafe}));
+      wall.position.set(-9,2,-kickerS-6-i*8);
+      dynamicGroup.add(wall);
+      const wall2 = wall.clone(); wall2.position.x=9;
+      dynamicGroup.add(wall2);
+    }
+  } else {
+    const jumpRamp = new THREE.Mesh(new THREE.BoxGeometry(10,3,10), new THREE.MeshStandardMaterial({color:0x94a3b8}));
+    jumpRamp.position.set(0,1.5,-kickerS-14);
+    dynamicGroup.add(jumpRamp);
+  }
+
+  const player = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.ConeGeometry(0.5,1.4,8), new THREE.MeshStandardMaterial({color:0xa855f7}));
+  body.rotation.x = Math.PI/2;
+  player.add(body);
+  player.position.set(0,1,0);
+  dynamicGroup.add(player);
+  R.playerMesh = player;
+
+  camera.position.set(0,6,10);
+}
+
+function updateFreestyle(dt){
+  if(R.phase==='approach'){
+    R.s += R.speed*dt;
+    R.playerMesh.position.set(0,1,-R.s);
+    updateChaseCamera(R.playerMesh.position, R.speed);
+    document.getElementById('hud-timer').textContent = 'Approach';
+    document.getElementById('hud-extra').textContent = 'Press SPACE right at the kicker!';
+
+    if(Math.abs(R.s-R.kickerS) < 4 && KEYS.has('Space') && !R.popped){
+      const acc = clamp(1-Math.abs(R.s-R.kickerS)/2.5,0,1);
+      R.popQuality = acc*10;
+      R.vy = 12+acc*8;
+      R.popped = true;
+      R.phase = 'air';
+      SoundController.launch();
+    } else if(R.s > R.kickerS+4 && !R.popped){
+      R.vy = 10; R.popped = true; R.phase = 'air'; R.popQuality = 2;
+    }
+  } else if(R.phase==='air'){
+    const grab = KEYS.has('ShiftLeft')||KEYS.has('ShiftRight');
+    if(grab) R.grabDuration += dt;
+    const rot = 200*dt*(grab?0.75:1);
+    if(KEYS.has('KeyW')) R.pitchDeg += rot;
+    if(KEYS.has('KeyS')) R.pitchDeg -= rot;
+    if(KEYS.has('KeyD')) R.yawDeg += rot;
+    if(KEYS.has('KeyA')) R.yawDeg -= rot;
+    if(KEYS.has('KeyE')) R.rollDeg += rot;
+    if(KEYS.has('KeyQ')) R.rollDeg -= rot;
+
+    R.vy += -20*dt;
+    R.y += R.vy*dt;
+    R.peakY = Math.max(R.peakY, R.y);
+    R.s += 10*dt;
+
+    R.playerMesh.position.set(0, 1+R.y, -R.s);
+    R.playerMesh.rotation.x = THREE.MathUtils.degToRad(R.pitchDeg);
+    R.playerMesh.rotation.y = THREE.MathUtils.degToRad(R.yawDeg);
+    R.playerMesh.rotation.z = THREE.MathUtils.degToRad(R.rollDeg);
+    updateChaseCamera(R.playerMesh.position, 10);
+
+    document.getElementById('hud-timer').textContent = Math.round(Math.abs(R.pitchDeg)+Math.abs(R.yawDeg)+Math.abs(R.rollDeg))+'°';
+    document.getElementById('hud-extra').textContent = grab ? 'GRABBING (style +)' : 'W/S flip · A/D spin · Q/E corkscrew';
+
+    if(R.y<=0 && R.vy<0) landFreestyle();
+  }
+}
+function landFreestyle(){
+  if(R.finished) return;
+  R.finished = true;
+  R.playerMesh.position.y = 1;
+  const normPitch = ((R.pitchDeg%360)+360)%360;
+  const diff = Math.min(normPitch, Math.abs(360-normPitch), Math.abs(normPitch-180));
+  const aligned = diff < 40;
+  const totalDeg = Math.abs(R.pitchDeg)+Math.abs(R.yawDeg)+Math.abs(R.rollDeg);
+  const amplitude = clamp(R.peakY/12,0,1)*100;
+  const difficulty = clamp(totalDeg/1080,0,1)*100;
+  const execution = clamp((R.grabDuration>0.3?20:0) + (aligned?70:20) + R.popQuality, 0, 100);
+  let raw = amplitude*0.3 + difficulty*0.4 + execution*0.3;
+  if(!aligned){ raw*=0.45; SoundController.crash(); } else { SoundController.land(); }
+  const final = clamp(raw,8,100);
+  showScoreboard({metric:final, display: final.toFixed(1)+(aligned?'':' (crash)'), lowerBetter:false});
+}
+
+/* =========================================================================
+   SHARED CAMERA
+   ========================================================================= */
+function updateChaseCamera(pos, speed){
+  const camTarget = new THREE.Vector3(pos.x*0.5, pos.y+5+Math.min(speed*0.05,3), pos.z+11);
+  camera.position.lerp(camTarget, 0.08);
+  camera.lookAt(pos.x, pos.y+1, pos.z-8);
+}
+
+function updateActiveEvent(dt){
+  const ev = R.ev;
+  if(ev.type==='alpine' || ev.type==='moguls') updateAlpineLike(dt);
+  else if(ev.type==='skijump') updateSkiJump(dt);
+  else updateFreestyle(dt);
+}
+
+/* =========================================================================
+   GAME LOOP
+   ========================================================================= */
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if(game.state==='HUB') updateHub(dt);
+  else if(game.state==='PLAYING'){ updateActiveEvent(dt); updateGhosts(dt); }
+  renderer.render(scene, camera);
+}
+buildHub();
+animate();
+</script>
+</body>
+</html>
