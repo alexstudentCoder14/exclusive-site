@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Pixel Pet Shelter Game Exclusive Testing Lab</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0d0e12;--panel:#161820;--border:#272a37;--text:#f3f4f6;--muted:#9ca3af;--accent:#6366f1;--accent-h:#7577f3;--danger:#ef4444;--ok:#34d399}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+.hidden{display:none!important}
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(600px circle at 50% 0,rgba(99,102,241,.1),transparent 70%),var(--bg)}
+.login-card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px 28px 28px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.logo{width:44px;height:44px;border-radius:11px;background:var(--accent);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;padding:8px;margin-bottom:18px}
+.logo span{background:rgba(255,255,255,.92);border-radius:1px}.logo span.off{background:transparent}
+.login-card h1{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.3;margin-bottom:6px}
+.sub{font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:18px}
+.tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:20px}
+.tab{flex:1;background:transparent;border:0;color:var(--muted);font-size:13px;font-weight:600;padding:8px;border-radius:7px;cursor:pointer}
+.tab.active{background:var(--accent);color:#fff}
+.lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:12px 0 7px}
+.inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 13px;outline:0;transition:border-color .15s,box-shadow .15s}
+.inp::placeholder{color:#5b6070}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+textarea.inp{min-height:90px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.btn{background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:10px;font-size:14px;font-weight:600;padding:11px 16px;cursor:pointer;transition:background .15s,opacity .15s}
+.btn:hover{background:var(--accent-h)}.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.full{width:100%;margin-top:16px}
+.btn.ghost{background:transparent;border-color:var(--border);color:var(--text)}
+.btn.ghost:hover{border-color:var(--accent);background:rgba(99,102,241,.08)}
+.btn.sm{font-size:12px;padding:6px 10px;border-radius:8px}
+.btn.del:hover{border-color:var(--danger);color:#fca5a5;background:rgba(239,68,68,.08)}
+.msg{display:none;margin-top:14px;font-size:13px;line-height:1.45;border-radius:10px;padding:10px 12px;color:#fca5a5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35)}
+.msg.show{display:block}.msg.good{color:#6ee7b7;background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.35)}
+.app{display:none;height:100vh;width:100%}.app.show{display:flex}
+.sidebar{width:280px;flex:0 0 280px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:22px 16px 16px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px;padding:0 6px 20px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.brand .logo{width:34px;height:34px;flex:0 0 34px;margin:0;padding:6px;gap:2px;border-radius:9px}
+.brand .t{font-size:14px;font-weight:600;line-height:1.25}
+.brand .t small{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.nav-h{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;padding:0 8px;margin-bottom:10px}
+.game-list{display:flex;flex-direction:column;gap:6px;list-style:none}
+.game-btn{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:transparent;color:var(--muted);border:1px solid transparent;border-radius:10px;font-size:14px;font-weight:500;padding:11px 12px;cursor:pointer;transition:background .15s,color .15s}
+.game-btn .dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--border)}
+.game-btn:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.game-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}.game-btn.active .dot{background:#fff}
+.note{font-size:13px;color:var(--muted);padding:8px 10px}
+.spacer{flex:1 1 auto;min-height:24px}
+.who{border-top:1px solid var(--border);padding:16px 8px 14px}
+.who .l{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-bottom:4px}
+.who .n{font-size:14px;font-weight:500;word-break:break-word}
+.btn-exit{width:100%;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:500;padding:11px 12px;cursor:pointer;transition:all .15s}
+.btn-exit:hover{border-color:var(--danger);color:#fca5a5;background:rgba(239,68,68,.06)}
+.stage{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;padding:18px;gap:14px;overflow-y:auto}
+.stage-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 4px}
+.stage-h h2{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.path{font-size:12px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50%}
+.frame-wrap{position:relative;flex:1 1 auto;min-height:0;background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+iframe.game{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;display:none}iframe.game.show{display:block}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);gap:8px}
+.empty b{font-size:16px;color:var(--text)}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
+.tbl-wrap{overflow-x:auto;margin-top:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle}
+td .acts{display:flex;gap:6px;flex-wrap:wrap}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#c7d2fe}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;border:1px solid var(--border)}
+.pill.ok{color:var(--ok);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.pill.bad{color:#fca5a5;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:12px}
+.chk input{accent-color:var(--accent)}
+.prev{position:relative;height:420px;margin-top:14px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg)}
+@media(max-width:800px){
+.app.show{flex-direction:column;height:auto;min-height:100vh}
+.sidebar{width:100%;flex:0 0 auto;border-right:0;border-bottom:1px solid var(--border);padding:18px 14px 14px;overflow-y:visible}
+.spacer{min-height:12px}.stage{padding:14px;overflow-y:visible}
+.frame-wrap{min-height:70vh}.path{display:none}}
+</style>
+</head>
+<body>
+
+<section id="loginScreen">
+  <div class="login-card">
+    <div class="logo" aria-hidden="true"><span class="off"></span><span></span><span class="off"></span><span></span><span></span><span></span><span></span><span class="off"></span><span></span></div>
+    <h1>The Pixel Pet Shelter Game Exclusive Testing Lab</h1>
+    <p class="sub">Members only. Sign in to access the playground.</p>
+    <div class="tabs">
+      <button class="tab active" id="tabMember" type="button">Member</button>
+      <button class="tab" id="tabAdmin" type="button">Admin</button>
+    </div>
+    <div id="memberForm">
+      <label class="lbl" for="passcodeInput">Membership passcode</label>
+      <input id="passcodeInput" class="inp" type="password" placeholder="Enter your passcode" autocomplete="off" spellcheck="false">
+      <button id="loginBtn" class="btn full" type="button">Enter Lab</button>
+    </div>
+    <div id="adminForm" class="hidden">
+      <label class="lbl" for="adminEmail">Admin email</label>
+      <input id="adminEmail" class="inp" type="email" placeholder="admin@example.com" autocomplete="username">
+      <label class="lbl" for="adminPass">Password</label>
+      <input id="adminPass" class="inp" type="password" placeholder="Password" autocomplete="current-password">
+      <button id="adminLoginBtn" class="btn full" type="button">Sign in as admin</button>
+    </div>
+    <div id="loginError" class="msg" role="alert"></div>
+  </div>
+</section>
+
+<main id="dashboard" class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo" aria-hidden="true"><span class="off"></span><span></span><span class="off"></span><span></span><span></span><span></span><span></span><span class="off"></span><span></span></div><div class="t">Pixel Pet Shelter<small>Testing Lab</small></div></div>
+    <div class="nav-h">Games</div>
+    <ul class="game-list" id="gameList"></ul>
+    <div class="spacer"></div>
+    <div class="who"><div class="l">Signed in as</div><div class="n" id="memberName">Member</div></div>
+    <button id="exitBtn" class="btn-exit" type="button">Exit Lab</button>
+  </aside>
+  <section class="stage">
+    <div class="stage-h"><h2 id="gameTitle">Select a game</h2><span class="path" id="gamePath"></span></div>
+    <div class="frame-wrap">
+      <div class="empty" id="emptyState"><b>Nothing loaded yet</b><span>Pick a game from the sidebar to start testing it here.</span></div>
+      <iframe id="gameFrame" class="game" title="Game viewport" sandbox="allow-scripts allow-same-origin" allowfullscreen></iframe>
+    </div>
+  </section>
+</main>
+
+<main id="adminApp" class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo" aria-hidden="true"><span class="off"></span><span></span><span class="off"></span><span></span><span></span><span></span><span></span><span class="off"></span><span></span></div><div class="t">Admin Console<small>Testing Lab</small></div></div>
+    <div class="nav-h">Manage</div>
+    <ul class="game-list">
+      <li><button class="game-btn active" type="button" data-panel="panelMembers"><span class="dot"></span><span>Members</span></button></li>
+      <li><button class="game-btn" type="button" data-panel="panelGames"><span class="dot"></span><span>Games</span></button></li>
+    </ul>
+    <div class="spacer"></div>
+    <div class="who"><div class="l">Signed in as</div><div class="n" id="adminName">Admin</div></div>
+    <button id="adminExitBtn" class="btn-exit" type="button">Exit Admin</button>
+  </aside>
+  <section class="stage">
+    <div id="adminMsg" class="msg"></div>
+
+    <div id="panelMembers" class="panel">
+      <div class="card">
+        <h3>Add member</h3>
+        <p class="sub" style="margin-bottom:6px">Create a passcode and share it with the tester.</p>
+        <div class="row">
+          <div><label class="lbl">Name</label><input id="mName" class="inp" placeholder="Tester name"></div>
+          <div><label class="lbl">Passcode</label><input id="mCode" class="inp" placeholder="Passcode" autocomplete="off"></div>
+          <div><label class="lbl">Plan</label><select id="mPlan" class="inp"><option>standard</option><option>vip</option><option>tester</option></select></div>
+          <div><label class="lbl">Expires (optional)</label><input id="mExp" class="inp" type="date"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+          <button id="genCode" class="btn ghost" type="button">Generate passcode</button>
+          <button id="addMember" class="btn" type="button">Add member</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Members</h3>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Passcode</th><th>Plan</th><th>Status</th><th>Expires</th><th>Actions</th></tr></thead><tbody id="memberRows"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="panelGames" class="panel hidden">
+      <div class="card">
+        <h3>Add game</h3>
+        <p class="sub" style="margin-bottom:6px">Upload or paste a complete HTML game, or point to a file path in your repo.</p>
+        <div class="row">
+          <div><label class="lbl">Title</label><input id="gTitle" class="inp" placeholder="Game title"></div>
+          <div><label class="lbl">HTML file</label><input id="gFile" class="inp" type="file" accept=".html,.htm,text/html"></div>
+          <div><label class="lbl">Or file path</label><input id="gPath" class="inp" placeholder="games/my-game.html"></div>
+        </div>
+        <label class="lbl">Or paste HTML</label>
+        <textarea id="gHtml" class="inp" placeholder="&lt;!DOCTYPE html&gt;..."></textarea>
+        <label class="chk"><input type="checkbox" id="gSame"> Allow same-origin access (needed for localStorage; only for games you fully trust)</label>
+        <button id="addGame" class="btn" type="button" style="margin-top:16px">Add game</button>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Games</h3>
+        <div class="tbl-wrap"><table><thead><tr><th>Title</th><th>Source</th><th>Status</th><th>Actions</th></tr></thead><tbody id="gameRows"></tbody></table></div>
+        <div class="prev"><iframe id="adminFrame" class="game" title="Game preview" sandbox="allow-scripts"></iframe><div class="empty" id="prevEmpty"><b>Preview</b><span>Press Preview on a game to test it here.</span></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://lorhunodlolnrrugpyfl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_eqhHXv2rwi_UVaC7x-bQjA__a9SCLh_";
+
+const sbInstance = (typeof supabase !== "undefined")
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true },
+      global: {
+        headers: {
+          'apikey': SUPABASE_KEY
+        }
+      }
+    })
+  : null;
+
+const SESSION_KEY = "ppsl_member_session";
+const $ = function (id) { return document.getElementById(id); };
+const esc = function (s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+};
+let memberCode = "";
+let memberGames = [];
+let adminGames = [];
+let adminMembers = [];
+
+function flash(el, text, good) {
+  el.textContent = text;
+  el.className = "msg show" + (good ? " good" : "");
+}
+function clearFlash(el) { el.textContent = ""; el.className = "msg"; }
+
+function showView(v) {
+  $("loginScreen").style.display = v === "login" ? "flex" : "none";
+  $("dashboard").classList.toggle("show", v === "member");
+  $("adminApp").classList.toggle("show", v === "admin");
+}
+
+function setTab(which) {
+  const admin = which === "admin";
+  $("tabAdmin").classList.toggle("active", admin);
+  $("tabMember").classList.toggle("active", !admin);
+  $("adminForm").classList.toggle("hidden", !admin);
+  $("memberForm").classList.add("hidden");
+  if (!admin) $("memberForm").classList.remove("hidden");
+  clearFlash($("loginError"));
+}
+
+async function playInto(frame, g, getHtml) {
+  frame.removeAttribute("src");
+  frame.removeAttribute("srcdoc");
+  frame.setAttribute("sandbox", "allow-scripts" + ((g.src || g.allow_same_origin) ? " allow-same-origin" : ""));
+  if (g.src) {
+    frame.setAttribute("src", g.src);
+  } else {
+    const html = await getHtml(g.id);
+    frame.setAttribute("srcdoc", html || "<p style='font-family:sans-serif;padding:20px'>This game is unavailable.</p>");
+  }
+  frame.classList.add("show");
+}
+
+/* ---------- MEMBER ---------- */
+async function attemptLogin() {
+  const err = $("loginError");
+  clearFlash(err);
+  const enteredCode = $("passcodeInput").value.trim();
+  if (!enteredCode) { flash(err, "Invalid, disabled, or expired membership passcode."); return; }
+  if (!sbInstance) { flash(err, "Could not load the connection library. Check your internet connection and reload."); return; }
+  $("loginBtn").disabled = true;
+  $("loginBtn").textContent = "Checking...";
+  try {
+    const res = await sbInstance.rpc("member_login", { p_code: enteredCode }).maybeSingle();
+    if (res.error) {
+      console.error(res.error);
+      flash(err, "Could not reach the membership server. Please try again.");
+    } else if (!res.data) {
+      flash(err, "Invalid, disabled, or expired membership passcode.");
+    } else {
+      const name = res.data.name || "Member";
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ name: name, code: enteredCode })); } catch (e) {}
+      $("passcodeInput").value = "";
+      await enterMember(name, enteredCode);
+    }
+  } catch (e) {
+    console.error(e);
+    flash(err, "Could not reach the membership server. Please try again.");
+  } finally {
+    $("loginBtn").disabled = false;
+    $("loginBtn").textContent = "Enter Lab";
+  }
+}
+
+async function enterMember(name, code) {
+  memberCode = code;
+  $("memberName").textContent = name;
+  resetStage();
+  showView("member");
+  const list = $("gameList");
+  list.innerHTML = '<li class="note">Loading games...</li>';
+  const res = await sbInstance.rpc("member_games", { p_code: code });
+  if (res.error) { list.innerHTML = '<li class="note">Could not load games.</li>'; return; }
+  memberGames = res.data || [];
+  if (!memberGames.length) { list.innerHTML = '<li class="note">No games are available yet.</li>'; return; }
+  list.innerHTML = memberGames.map(function (g) {
+    const ds = g.src ? g.src : "db/" + g.id;
+    return '<li><button class="game-btn" type="button" data-src="' + esc(ds) + '" data-id="' + esc(g.id) + '"><span class="dot"></span><span>' + esc(g.title) + '</span></button></li>';
+  }).join("");
+}
+
+async function loadGame(btn) {
+  const g = memberGames.find(function (x) { return x.id === btn.getAttribute("data-id"); });
+  if (!g) return;
+  document.querySelectorAll("#gameList .game-btn").forEach(function (b) { b.classList.remove("active"); });
+  btn.classList.add("active");
+  $("gameTitle").textContent = g.title;
+  $("gamePath").textContent = btn.getAttribute("data-src");
+  $("emptyState").style.display = "none";
+  await playInto($("gameFrame"), g, async function (id) {
+    const r = await sbInstance.rpc("member_game_html", { p_code: memberCode, p_id: id });
+    return r.data;
+  });
+}
+
+function resetStage() {
+  document.querySelectorAll("#gameList .game-btn").forEach(function (b) { b.classList.remove("active"); });
+  const f = $("gameFrame");
+  f.removeAttribute("src"); f.removeAttribute("srcdoc"); f.classList.remove("show");
+  $("emptyState").style.display = "flex";
+  $("gameTitle").textContent = "Select a game";
+  $("gamePath").textContent = "";
+}
+
+function exitLab() {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+  memberCode = ""; memberGames = [];
+  resetStage();
+  showView("login");
+  setTab("member");
+  $("passcodeInput").value = "";
+  $("passcodeInput").focus();
+}
+
+/* ---------- ADMIN ---------- */
+async function adminLogin() {
+  const err = $("loginError");
+  clearFlash(err);
+  const email = $("adminEmail").value.trim();
+  const password = $("adminPass").value;
+  if (!sbInstance) { flash(err, "Could not load the connection library. Check your internet connection and reload."); return; }
+  if (!email || !password) { flash(err, "Enter your admin email and password."); return; }
+  $("adminLoginBtn").disabled = true;
+  try {
+    const auth = await sbInstance.auth.signInWithPassword({ email: email, password: password });
+    if (auth.error) { flash(err, "Invalid admin credentials."); return; }
+    const chk = await sbInstance.rpc("is_admin");
+    if (chk.error || chk.data !== true) {
+      await sbInstance.auth.signOut();
+      flash(err, "This account does not have admin access.");
+      return;
+    }
+    $("adminPass").value = "";
+    await enterAdmin(email);
+  } catch (e) {
+    console.error(e);
+    flash(err, "Could not reach the server. Please try again.");
+  } finally {
+    $("adminLoginBtn").disabled = false;
+  }
+}
+
+async function enterAdmin(email) {
+  $("adminName").textContent = email || "Admin";
+  showView("admin");
+  showPanel("panelMembers");
+  await Promise.all([loadMembers(), loadGames()]);
+}
+
+function showPanel(id) {
+  ["panelMembers", "panelGames"].forEach(function (p) { $(p).classList.toggle("hidden", p !== id); });
+  document.querySelectorAll("#adminApp .game-btn").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-panel") === id);
+  });
+  clearFlash($("adminMsg"));
+}
+
+function genCode() {
+  const a = new Uint8Array(6);
+  crypto.getRandomValues(a);
+  $("mCode").value = "lab-" + Array.from(a).map(function (x) { return x.toString(16).padStart(2, "0"); }).join("");
+}
+
+function memberStatus(m) {
+  if (!m.active) return ["Disabled", "bad"];
+  if (m.expires_at && new Date(m.expires_at) < new Date()) return ["Expired", "bad"];
+  return ["Active", "ok"];
+}
+
+async function loadMembers() {
+  const r = await sbInstance.from("members").select("*").order("created_at", { ascending: false });
+  if (r.error) { flash($("adminMsg"), "Could not load members: " + r.error.message); return; }
+  adminMembers = r.data || [];
+  $("memberRows").innerHTML = adminMembers.length ? adminMembers.map(function (m) {
+    const s = memberStatus(m);
+    const exp = m.expires_at ? new Date(m.expires_at).toLocaleDateString() : "Never";
+    return '<tr><td>' + esc(m.name) + '</td><td><code>' + esc(m.passcode) + '</code></td><td>' + esc(m.plan) +
+      '</td><td><span class="pill ' + s[1] + '">' + s[0] + '</span></td><td>' + exp +
+      '</td><td><div class="acts"><button class="btn ghost sm" data-act="toggle" data-id="' + esc(m.id) + '">' + (m.active ? "Disable" : "Enable") +
+      '</button><button class="btn ghost sm" data-act="extend" data-id="' + esc(m.id) + '">+30 days</button><button class="btn ghost sm" data-act="clear" data-id="' + esc(m.id) +
+      '">No expiry</button><button class="btn ghost sm del" data-act="del" data-id="' + esc(m.id) + '">Delete</button></div></td></tr>';
+  }).join("") : '<tr><td colspan="6" class="note">No members yet.</td></tr>';
+}
+
+async function addMember() {
+  const msg = $("adminMsg");
+  const name = $("mName").value.trim();
+  const code = $("mCode").value.trim();
+  if (!name || !code) { flash(msg, "Name and passcode are required."); return; }
+  const row = { name: name, passcode: code, plan: $("mPlan").value, active: true };
+  if ($("mExp").value) row.expires_at = new Date($("mExp").value + "T23:59:59").toISOString();
+  const r = await sbInstance.from("members").insert(row);
+  if (r.error) { flash(msg, r.error.code === "23505" ? "That passcode is already in use." : "Could not add member: " + r.error.message); return; }
+  $("mName").value = ""; $("mCode").value = ""; $("mExp").value = "";
+  flash(msg, "Member added.", true);
+  await loadMembers();
+}
+
+async function memberAction(act, id) {
+  const m = adminMembers.find(function (x) { return x.id === id; });
+  if (!m) return;
+  let r;
+  if (act === "toggle") r = await sbInstance.from("members").update({ active: !m.active }).eq("id", id);
+  else if (act === "extend") {
+    const base = m.expires_at && new Date(m.expires_at) > new Date() ? new Date(m.expires_at) : new Date();
+    base.setDate(base.getDate() + 30);
+    r = await sbInstance.from("members").update({ expires_at: base.toISOString(), active: true }).eq("id", id);
+  } else if (act === "clear") r = await sbInstance.from("members").update({ expires_at: null }).eq("id", id);
+  else if (act === "del") {
+    if (!confirm("Delete " + m.name + " permanently?")) return;
+    r = await sbInstance.from("members").delete().eq("id", id);
+  }
+  if (r && r.error) flash($("adminMsg"), "Action failed: " + r.error.message);
+  else clearFlash($("adminMsg"));
+  await loadMembers();
+}
+
+async function loadGames() {
+  const r = await sbInstance.from("games").select("id,title,src,allow_same_origin,enabled,created_at").order("created_at");
+  if (r.error) { flash($("adminMsg"), "Could not load games: " + r.error.message); return; }
+  adminGames = r.data || [];
+  $("gameRows").innerHTML = adminGames.length ? adminGames.map(function (g) {
+    return '<tr><td>' + esc(g.title) + '</td><td>' + (g.src ? '<code>' + esc(g.src) + '</code>' : 'Uploaded HTML') +
+      '</td><td><span class="pill ' + (g.enabled ? "ok" : "bad") + '">' + (g.enabled ? "Visible" : "Hidden") +
+      '</span></td><td><div class="acts"><button class="btn ghost sm" data-act="preview" data-id="' + esc(g.id) + '">Preview</button><button class="btn ghost sm" data-act="gtoggle" data-id="' + esc(g.id) + '">' + (g.enabled ? "Hide" : "Show") +
+      '</button><button class="btn ghost sm del" data-act="gdel" data-id="' + esc(g.id) + '">Delete</button></div></td></tr>';
+  }).join("") : '<tr><td colspan="4" class="note">No games yet.</td></tr>';
+}
+
+async function addGame() {
+  const msg = $("adminMsg");
+  const title = $("gTitle").value.trim();
+  const path = $("gPath").value.trim();
+  const html = $("gHtml").value.trim();
+  if (!title) { flash(msg, "Give the game a title."); return; }
+  if (!path && !html) { flash(msg, "Upload or paste HTML, or enter a file path."); return; }
+  if (path && !/^[\w\-./]+\.html?$/i.test(path)) { flash(msg, "File path must be a relative .html path like games/my-game.html."); return; }
+  const row = { title: title, allow_same_origin: $("gSame").checked, enabled: true };
+  if (path) row.src = path; else row.html = html;
+  const r = await sbInstance.from("games").insert(row);
+  if (r.error) { flash(msg, "Could not add game: " + r.error.message); return; }
+  ["gTitle", "gPath", "gHtml", "gFile"].forEach(function (i) { $(i).value = ""; });
+  $("gSame").checked = false;
+  flash(msg, "Game added. Members will see it next time they sign in or reload.", true);
+  await loadGames();
+}
+
+async function gameAction(act, id) {
+  const g = adminGames.find(function (x) { return x.id === id; });
+  if (!g) return;
+  let r;
+  if (act === "preview") {
+    $("prevEmpty").style.display = "none";
+    await playInto($("adminFrame"), g, async function (gid) {
+      const q = await sbInstance.from("games").select("html").eq("id", gid).maybeSingle();
+      return q.data ? q.data.html : "";
+    });
+    return;
+  }
+  if (act === "gtoggle") r = await sbInstance.from("games").update({ enabled: !g.enabled }).eq("id", id);
+  else if (act === "gdel") {
+    if (!confirm("Delete " + g.title + " permanently?")) return;
+    r = await sbInstance.from("games").delete().eq("id", id);
+  }
+  if (r && r.error) flash($("adminMsg"), "Action failed: " + r.error.message);
+  else clearFlash($("adminMsg"));
+  await loadGames();
+}
+
+async function adminExit() {
+  try { await sbInstance.auth.signOut(); } catch (e) {}
+  const f = $("adminFrame");
+  f.removeAttribute("src"); f.removeAttribute("srcdoc"); f.classList.remove("show");
+  $("prevEmpty").style.display = "flex";
+  showView("login");
+  setTab("admin");
+}
+
+/* ---------- WIRING ---------- */
+$("tabMember").addEventListener("click", function () { setTab("member"); });
+$("tabAdmin").addEventListener("click", function () { setTab("admin"); });
+$("loginBtn").addEventListener("click", attemptLogin);
+$("passcodeInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); attemptLogin(); } });
+$("passcodeInput").addEventListener("input", function () { clearFlash($("loginError")); });
+$("adminLoginBtn").addEventListener("click", adminLogin);
+$("adminPass").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); adminLogin(); } });
+$("exitBtn").addEventListener("click", exitLab);
+$("adminExitBtn").addEventListener("click", adminExit);
+$("gameList").addEventListener("click", function (e) {
+  const b = e.target.closest(".game-btn");
+  if (b && b.hasAttribute("data-id")) loadGame(b);
+});
+document.querySelectorAll("#adminApp .game-btn").forEach(function (b) {
+  b.addEventListener("click", function () { showPanel(b.getAttribute("data-panel")); });
+});
+$("genCode").addEventListener("click", genCode);
+$("addMember").addEventListener("click", addMember);
+$("addGame").addEventListener("click", addGame);
+$("memberRows").addEventListener("click", function (e) {
+  const b = e.target.closest("button[data-act]");
+  if (b) memberAction(b.getAttribute("data-act"), b.getAttribute("data-id"));
+});
+$("gameRows").addEventListener("click", function (e) {
+  const b = e.target.closest("button[data-act]");
+  if (b) gameAction(b.getAttribute("data-act"), b.getAttribute("data-id"));
+});
+$("gFile").addEventListener("change", function () {
+  const f = $("gFile").files[0];
+  if (!f) return;
+  if (f.size > 3 * 1024 * 1024) { flash($("adminMsg"), "That file is over 3 MB. Host it in your repo and use a file path instead."); $("gFile").value = ""; return; }
+  const rd = new FileReader();
+  rd.onload = function () {
+    $("gHtml").value = rd.result;
+    if (!$("gTitle").value) $("gTitle").value = f.name.replace(/\.html?$/i, "");
+  };
+  rd.readAsText(f);
+});
+
+(async function restore() {
+  if (!sbInstance) { showView("login"); return; }
+  try {
+    const s = await sbInstance.auth.getSession();
+    if (s.data && s.data.session) {
+      const chk = await sbInstance.rpc("is_admin");
+      if (chk.data === true) { await enterAdmin(s.data.session.user.email); return; }
+    }
+  } catch (e) {}
+  let saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch (e) { saved = null; }
+  if (saved && saved.code) {
+    const res = await sbInstance.rpc("member_login", { p_code: saved.code }).maybeSingle();
+    if (res.data) { await enterMember(res.data.name, saved.code); return; }
+    try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+  }
+  showView("login");
+  $("passcodeInput").focus();
+})();
+</script>
+</body>
+</html>
