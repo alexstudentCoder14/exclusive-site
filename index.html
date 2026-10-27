@@ -8,10 +8,10 @@
     <!-- Supabase JS v2 CDN Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- FontAwesome Icons -->
+    <!-- FontAwesome Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom Theme Styling -->
@@ -32,7 +32,7 @@
             overflow-x: hidden;
         }
 
-        /* Custom Scrollbars */
+        /* Custom Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -48,7 +48,7 @@
             background: #6366f1;
         }
 
-        /* Sidebar Navigation Button States */
+        /* Sidebar Navigation Button Active/Hover States */
         .game-nav-btn {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -71,7 +71,7 @@
             color: #ffffff;
         }
 
-        /* Ambient Glow Backdrop for Login */
+        /* Ambient Glow Backdrop for Login Screen */
         .glow-effect {
             position: absolute;
             width: 450px;
@@ -84,12 +84,12 @@
             z-index: 0;
         }
 
-        /* Responsive Viewport Presets */
+        /* Responsive Canvas Viewport Presets */
         .viewport-desktop { width: 100%; height: 100%; }
         .viewport-tablet { width: 768px; height: 100%; max-height: 900px; }
         .viewport-mobile { width: 375px; height: 667px; }
 
-        /* Custom Animations */
+        /* Fade-In Animation */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
@@ -107,30 +107,54 @@
         <div class="glow-effect"></div>
 
         <div class="relative z-10 w-full max-w-md bg-[#161820] border border-[#272a37] rounded-2xl p-8 shadow-2xl backdrop-blur-md">
-            <!-- Header Branding -->
-            <div class="text-center mb-8">
+            
+            <!-- Branding Header -->
+            <div class="text-center mb-6">
                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#6366f1]/10 border border-[#6366f1]/30 text-[#6366f1] mb-4 shadow-lg">
                     <i class="fas fa-paw text-2xl"></i>
                 </div>
                 <h1 class="text-2xl font-bold tracking-tight text-[#f3f4f6]">Pixel Pet Shelter</h1>
                 <p class="text-xs font-semibold tracking-widest text-[#6366f1] uppercase mt-1">Exclusive Testing Lab</p>
-                <p class="text-xs text-[#9ca3af] mt-2">Enter your authorized tester passcode to unlock builds</p>
             </div>
 
-            <!-- Login Form -->
+            <!-- Login Portal Mode Tabs (Tester vs Admin) -->
+            <div class="flex rounded-xl bg-[#0d0e12] p-1 border border-[#272a37] mb-6 text-xs font-semibold">
+                <button 
+                    type="button" 
+                    id="tab-login-tester" 
+                    onclick="switchLoginTab('tester')"
+                    class="flex-1 py-2.5 rounded-lg text-center transition-all bg-[#6366f1] text-white shadow-md"
+                >
+                    <i class="fas fa-flask mr-1.5"></i> Tester Login
+                </button>
+                <button 
+                    type="button" 
+                    id="tab-login-admin" 
+                    onclick="switchLoginTab('admin')"
+                    class="flex-1 py-2.5 rounded-lg text-center transition-all text-[#9ca3af] hover:text-[#f3f4f6]"
+                >
+                    <i class="fas fa-shield-halved mr-1.5"></i> Admin Portal
+                </button>
+            </div>
+
+            <!-- Login Gateway Form -->
             <form id="login-form" onsubmit="event.preventDefault(); attemptLogin();" class="space-y-5">
                 <div>
-                    <label for="passcode-input" class="block text-xs font-medium text-[#9ca3af] uppercase tracking-wider mb-2">
-                        Membership Passcode
-                    </label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label id="passcode-label" for="passcode-input" class="block text-xs font-medium text-[#9ca3af] uppercase tracking-wider">
+                            Tester Passcode
+                        </label>
+                        <span id="portal-badge" class="text-[10px] bg-[#272a37] text-[#9ca3af] px-2 py-0.5 rounded-full font-mono">QA Member</span>
+                    </div>
+
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#9ca3af]">
-                            <i class="fas fa-key text-sm"></i>
+                            <i id="login-input-icon" class="fas fa-key text-sm"></i>
                         </div>
                         <input 
                             type="password" 
                             id="passcode-input" 
-                            placeholder="Enter your passcode" 
+                            placeholder="Enter tester passcode" 
                             class="w-full pl-10 pr-4 py-3 bg-[#0d0e12] border border-[#272a37] rounded-xl text-[#f3f4f6] placeholder-[#9ca3af]/50 focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1] transition-all text-sm"
                             autocomplete="off"
                             required
@@ -138,28 +162,32 @@
                     </div>
                 </div>
 
-                <!-- Error Message Banner -->
-                <div id="login-error-message" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center leading-relaxed">
-                    <!-- Error text dynamically injected here -->
+                <!-- Red Warning Message Banner -->
+                <div id="login-error-message" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center leading-relaxed font-medium">
+                    <!-- Dynamic error string injected here -->
                 </div>
 
-                <!-- Submit Button -->
+                <!-- Login Action Button -->
                 <button 
                     type="submit" 
                     id="login-btn"
                     class="w-full py-3.5 px-4 bg-[#6366f1] hover:bg-[#6366f1]/90 text-white font-medium text-sm rounded-xl transition-all duration-200 shadow-lg shadow-[#6366f1]/25 flex items-center justify-center space-x-2 active:scale-[0.99]"
                 >
-                    <span>Access Testing Lab</span>
+                    <span id="login-btn-text">Access Testing Lab</span>
                     <i class="fas fa-arrow-right text-xs"></i>
                 </button>
             </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-[11px] text-[#9ca3af]">Authorized personnel only • Pixel Pet Shelter QA System</p>
+            </div>
         </div>
     </div>
 
     <!-- ==================== MAIN DASHBOARD SCREEN ==================== -->
     <div id="dashboard-screen" class="hidden flex-1 flex flex-col md:flex-row h-screen overflow-hidden bg-[#0d0e12]">
 
-        <!-- Mobile Header Bar -->
+        <!-- Mobile Header Navigation Bar -->
         <div class="md:hidden flex items-center justify-between px-4 py-3 bg-[#161820] border-b border-[#272a37]">
             <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 rounded-lg bg-[#6366f1]/20 border border-[#6366f1] flex items-center justify-center text-[#6366f1]">
@@ -177,7 +205,7 @@
 
         <!-- FIXED SIDEBAR NAVIGATION (280px) -->
         <aside id="sidebar" class="w-full md:w-[280px] md:min-w-[280px] md:max-w-[280px] bg-[#161820] border-r border-[#272a37] flex flex-col justify-between hidden md:flex transition-all z-20">
-            <!-- Top Section: Header & Navigation -->
+            <!-- Top Section: Branding & Build Navigation -->
             <div class="p-5 flex flex-col h-full overflow-y-auto">
                 <!-- Lab Logo Branding -->
                 <div class="flex items-center space-x-3 pb-5 mb-5 border-b border-[#272a37]">
@@ -188,26 +216,26 @@
                         <h2 class="text-sm font-bold text-[#f3f4f6] tracking-tight">Pixel Pet Shelter</h2>
                         <div class="flex items-center space-x-2 mt-0.5">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-[10px] font-bold text-[#6366f1] tracking-wider uppercase">Live Lab v3.0</span>
+                            <span class="text-[10px] font-bold text-[#6366f1] tracking-wider uppercase">Live QA Lab</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tester User Badge -->
+                <!-- User Credentials Profile Badge -->
                 <div class="mb-5 p-3 rounded-xl bg-[#0d0e12] border border-[#272a37] flex items-center justify-between">
                     <div class="flex items-center space-x-3 overflow-hidden">
                         <div class="w-8 h-8 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/30 flex items-center justify-center text-[#6366f1] text-xs shrink-0">
-                            <i class="fas fa-user-check"></i>
+                            <i id="user-badge-icon" class="fas fa-user-check"></i>
                         </div>
                         <div class="overflow-hidden">
-                            <p class="text-[10px] uppercase font-semibold text-[#9ca3af]">Authorized Member</p>
+                            <p id="user-role-label" class="text-[10px] uppercase font-semibold text-[#9ca3af]">Authorized Member</p>
                             <p id="user-display-name" class="text-xs font-semibold text-[#f3f4f6] truncate">Loading...</p>
                         </div>
                     </div>
                     <span id="admin-badge" class="hidden text-[9px] bg-[#6366f1]/20 text-[#6366f1] border border-[#6366f1]/40 px-2 py-0.5 rounded-full font-bold uppercase shrink-0">Admin</span>
                 </div>
 
-                <!-- Navigation Header -->
+                <!-- Navigation Section Header -->
                 <div class="flex items-center justify-between mb-3 px-1">
                     <span class="text-[11px] font-bold text-[#9ca3af] uppercase tracking-wider">Available Builds</span>
                     <span id="game-count-badge" class="text-[10px] bg-[#272a37] text-[#9ca3af] px-2 py-0.5 rounded-full font-mono">0</span>
@@ -215,10 +243,10 @@
 
                 <!-- Dynamic Game Navigation List -->
                 <nav class="space-y-2 flex-1" id="game-list">
-                    <!-- Dynamic games rendered here via JavaScript -->
+                    <!-- Dynamic game buttons with data-src rendered here via JS -->
                 </nav>
 
-                <!-- Admin Action Button (Visible to admins) -->
+                <!-- Admin Control Studio Button (Visible for Admin accounts) -->
                 <div id="admin-sidebar-section" class="hidden mt-4 pt-4 border-t border-[#272a37]">
                     <button 
                         onclick="openAdminModal()" 
@@ -230,7 +258,7 @@
                 </div>
             </div>
 
-            <!-- Bottom Section: Exit Lab Button -->
+            <!-- Bottom Section: Exit Lab Logout Button -->
             <div class="p-5 border-t border-[#272a37] bg-[#161820]">
                 <button 
                     onclick="exitLab()" 
@@ -242,10 +270,10 @@
             </div>
         </aside>
 
-        <!-- INTERACTIVE ARCADE IFRAME AREA -->
+        <!-- INTERACTIVE ARCADE CANVA / IFRAME DISPLAY AREA -->
         <main class="flex-1 flex flex-col h-full bg-[#0d0e12] overflow-hidden">
             
-            <!-- Dashboard Viewport Control Header -->
+            <!-- Dashboard Toolbar Header -->
             <header class="px-6 py-4 bg-[#161820] border-b border-[#272a37] flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center space-x-3">
                     <span id="active-build-badge" class="px-2.5 py-1 rounded-md bg-[#6366f1]/20 border border-[#6366f1]/40 text-[#6366f1] text-[10px] font-mono font-bold uppercase tracking-wider">
@@ -257,40 +285,40 @@
                     </div>
                 </div>
 
-                <!-- Viewport & Frame Action Toolbar -->
+                <!-- Toolbar Viewport Controls -->
                 <div class="flex items-center space-x-3 text-xs">
-                    <!-- Sandbox Security Badge -->
+                    <!-- Security Sandbox Indicator Badge -->
                     <div class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#0d0e12] border border-[#272a37] text-[#9ca3af] text-[11px]">
                         <i class="fas fa-shield-halved text-emerald-400"></i>
                         <span>Sandbox Secure</span>
                     </div>
 
-                    <!-- Responsive Viewport Presets -->
+                    <!-- Responsive Viewport Presets Mode Switcher -->
                     <div class="hidden lg:flex items-center bg-[#0d0e12] p-1 rounded-lg border border-[#272a37] space-x-1">
-                        <button onclick="setViewport('desktop')" id="vp-desktop" class="px-2.5 py-1 rounded-md bg-[#272a37] text-white text-[11px] font-medium transition-all">
-                            <i class="fas fa-desktop mr-1"></i> Full
+                        <button onclick="setViewport('desktop')" id="vp-desktop" class="px-2.5 py-1 rounded-md bg-[#272a37] text-white text-[11px] font-medium transition-all" title="Desktop View (100%)">
+                            <i class="fas fa-desktop mr-1"></i> Desktop
                         </button>
-                        <button onclick="setViewport('tablet')" id="vp-tablet" class="px-2.5 py-1 rounded-md text-[#9ca3af] hover:text-white text-[11px] font-medium transition-all">
+                        <button onclick="setViewport('tablet')" id="vp-tablet" class="px-2.5 py-1 rounded-md text-[#9ca3af] hover:text-white text-[11px] font-medium transition-all" title="Tablet View (768px)">
                             <i class="fas fa-tablet-screen-button mr-1"></i> Tablet
                         </button>
-                        <button onclick="setViewport('mobile')" id="vp-mobile" class="px-2.5 py-1 rounded-md text-[#9ca3af] hover:text-white text-[11px] font-medium transition-all">
+                        <button onclick="setViewport('mobile')" id="vp-mobile" class="px-2.5 py-1 rounded-md text-[#9ca3af] hover:text-white text-[11px] font-medium transition-all" title="Mobile View (375px)">
                             <i class="fas fa-mobile-screen mr-1"></i> Mobile
                         </button>
                     </div>
 
-                    <!-- Reload Game Canvas Button -->
+                    <!-- Reload Game Canvas Frame Button -->
                     <button onclick="reloadIframe()" title="Reload Frame" class="p-2 rounded-lg bg-[#0d0e12] hover:bg-[#272a37] border border-[#272a37] text-[#9ca3af] hover:text-white transition-all">
                         <i class="fas fa-rotate-right"></i>
                     </button>
 
-                    <!-- Fullscreen Canvas Button -->
-                    <button onclick="toggleFullscreen()" title="Fullscreen" class="p-2 rounded-lg bg-[#6366f1] hover:bg-[#6366f1]/90 text-white transition-all shadow-md shadow-[#6366f1]/20">
+                    <!-- Fullscreen Toggle Button -->
+                    <button onclick="toggleFullscreen()" title="Fullscreen Mode" class="p-2 rounded-lg bg-[#6366f1] hover:bg-[#6366f1]/90 text-white transition-all shadow-md shadow-[#6366f1]/20">
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
             </header>
 
-            <!-- Embedded Sandbox Iframe Container -->
+            <!-- Embedded Sandbox Canvas Container -->
             <div id="iframe-wrapper" class="flex-1 relative p-4 bg-[#0d0e12] flex items-center justify-center overflow-auto">
                 <div id="canvas-container" class="viewport-desktop transition-all duration-300 flex flex-col h-full w-full">
                     <iframe 
@@ -315,8 +343,8 @@
         </main>
     </div>
 
-    <!-- ==================== ADMIN MANAGEMENT MODAL ==================== -->
-    <div id="admin-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+    <!-- ==================== ADMIN MANAGEMENT STUDIO MODAL ==================== -->
+    <div id="admin-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
         <div class="relative w-full max-w-4xl bg-[#161820] border border-[#272a37] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             
             <!-- Modal Header -->
@@ -327,7 +355,7 @@
                     </div>
                     <div>
                         <h2 class="text-base font-bold text-[#f3f4f6]">Admin Management Studio</h2>
-                        <p class="text-xs text-[#9ca3af]">Manage builds, HTML files, and member credentials</p>
+                        <p class="text-xs text-[#9ca3af]">Manage game builds, HTML assets, and member access credentials</p>
                     </div>
                 </div>
                 <button onclick="closeAdminModal()" class="p-2 text-[#9ca3af] hover:text-white rounded-lg hover:bg-[#272a37] transition-all">
@@ -335,7 +363,7 @@
                 </button>
             </div>
 
-            <!-- Admin Navigation Tabs -->
+            <!-- Modal Navigation Tabs -->
             <div class="px-6 pt-3 bg-[#161820] border-b border-[#272a37] flex space-x-6 text-xs font-semibold">
                 <button 
                     id="tab-btn-games" 
@@ -351,20 +379,20 @@
                     class="pb-3 border-b-2 border-transparent text-[#9ca3af] hover:text-white flex items-center space-x-2 transition-all"
                 >
                     <i class="fas fa-users-gear"></i>
-                    <span>Member Accounts</span>
+                    <span>Member Credentials</span>
                 </button>
             </div>
 
-            <!-- Tab Content Container -->
+            <!-- Tab Content Area -->
             <div class="p-6 overflow-y-auto flex-1 space-y-6">
 
-                <!-- ================= TAB 1: MANAGE GAMES ================= -->
+                <!-- TAB 1: MANAGE GAME BUILDS -->
                 <div id="tab-content-games" class="space-y-6">
-                    <!-- Form: Upload / Add New Game -->
+                    <!-- Form: Add New Game Build -->
                     <div class="p-5 rounded-xl bg-[#0d0e12] border border-[#272a37] space-y-4">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-[#6366f1] flex items-center space-x-2">
                             <i class="fas fa-plus-circle"></i>
-                            <span>Add New Game Build</span>
+                            <span>Publish New Game Build</span>
                         </h3>
                         
                         <form id="add-game-form" onsubmit="event.preventDefault(); handleAddGame();" class="space-y-4">
@@ -386,19 +414,19 @@
                                         onchange="toggleGameSourceType()"
                                         class="w-full px-3.5 py-2.5 bg-[#161820] border border-[#272a37] rounded-xl text-xs text-[#f3f4f6] focus:outline-none focus:border-[#6366f1]"
                                     >
-                                        <option value="html">Raw HTML File Code</option>
+                                        <option value="html">Raw HTML Code</option>
                                         <option value="url">External Game URL</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <!-- Source Content Container -->
+                            <!-- Source Input Content -->
                             <div>
                                 <label id="game-content-label" class="block text-[11px] font-semibold text-[#9ca3af] uppercase mb-1">Raw HTML Code</label>
                                 <textarea 
                                     id="game-html-input" 
                                     rows="6" 
-                                    placeholder="Paste your full index.html or standalone HTML code here..." 
+                                    placeholder="Paste standalone single-file HTML code here..." 
                                     class="w-full px-3.5 py-2.5 bg-[#161820] border border-[#272a37] rounded-xl text-xs font-mono text-[#f3f4f6] focus:outline-none focus:border-[#6366f1] resize-y"
                                 ></textarea>
                                 <input 
@@ -420,22 +448,22 @@
                         </form>
                     </div>
 
-                    <!-- List of Existing Games in Supabase -->
+                    <!-- List of Existing Published Builds -->
                     <div>
                         <h3 class="text-xs font-bold uppercase tracking-wider text-[#9ca3af] mb-3">Published Builds in Supabase</h3>
                         <div id="admin-games-list" class="space-y-2">
-                            <!-- Dynamic admin games list -->
+                            <!-- Rendered dynamically -->
                         </div>
                     </div>
                 </div>
 
-                <!-- ================= TAB 2: MANAGE MEMBERS ================= -->
+                <!-- TAB 2: MANAGE MEMBERS & PASSCODES -->
                 <div id="tab-content-members" class="hidden space-y-6">
                     <!-- Form: Create New Member -->
                     <div class="p-5 rounded-xl bg-[#0d0e12] border border-[#272a37] space-y-4">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-[#6366f1] flex items-center space-x-2">
                             <i class="fas fa-user-plus"></i>
-                            <span>Create New Member Passcode</span>
+                            <span>Create New Member Credential</span>
                         </h3>
 
                         <form id="add-member-form" onsubmit="event.preventDefault(); handleAddMember();" class="space-y-4">
@@ -464,7 +492,7 @@
                                     <input 
                                         type="checkbox" 
                                         id="member-admin-checkbox" 
-                                        class="w-4 h-4 rounded bg-[#161820] border-[#272a37] text-[#6366f1] focus:ring-[#6366f1] focus:ring-offset-0 cursor-pointer"
+                                        class="w-4 h-4 rounded bg-[#161820] border-[#272a37] text-[#6366f1] focus:ring-[#6366f1] cursor-pointer"
                                     />
                                     <label for="member-admin-checkbox" class="text-xs font-medium text-[#f3f4f6] cursor-pointer">
                                         Grant Admin Privileges
@@ -483,11 +511,11 @@
                         </form>
                     </div>
 
-                    <!-- List of Existing Members in Supabase -->
+                    <!-- List of Existing Members -->
                     <div>
                         <h3 class="text-xs font-bold uppercase tracking-wider text-[#9ca3af] mb-3">Authorized Members List</h3>
                         <div id="admin-members-list" class="space-y-2">
-                            <!-- Dynamic admin members list -->
+                            <!-- Rendered dynamically -->
                         </div>
                     </div>
                 </div>
@@ -496,15 +524,15 @@
         </div>
     </div>
 
-    <!-- ==================== CUSTOM UI CONFIRMATION DIALOG ==================== -->
+    <!-- ==================== CUSTOM CONFIRMATION MODAL ==================== -->
     <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
         <div class="w-full max-w-sm bg-[#161820] border border-[#272a37] rounded-2xl p-6 shadow-2xl text-center space-y-4">
             <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center mx-auto text-xl">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
             <div>
-                <h3 id="confirm-title" class="text-base font-bold text-[#f3f4f6]">Confirm Deletion</h3>
-                <p id="confirm-msg" class="text-xs text-[#9ca3af] mt-1">Are you sure you want to delete this item?</p>
+                <h3 id="confirm-title" class="text-base font-bold text-[#f3f4f6]">Confirm Action</h3>
+                <p id="confirm-msg" class="text-xs text-[#9ca3af] mt-1">Are you sure you want to proceed?</p>
             </div>
             <div class="flex items-center space-x-3 pt-2">
                 <button onclick="closeConfirmModal(false)" class="flex-1 py-2.5 bg-[#0d0e12] border border-[#272a37] hover:bg-[#272a37] text-xs font-medium text-[#9ca3af] rounded-xl transition-all">
@@ -517,12 +545,12 @@
         </div>
     </div>
 
-    <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+    <!-- ==================== TOAST NOTIFICATIONS CONTAINER ==================== -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
     <!-- ==================== APPLICATION SCRIPT LOGIC ==================== -->
     <script>
-        // 1. SUPABASE CLIENT INITIALIZATION
+        // 1. SUPABASE CLIENT CONFIGURATION & INITIALIZATION
         const SUPABASE_URL = "https://cizkvjhhrbxnhuptsbd.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_NhymEWLkENiapC-lGIm4Fg_DNYo33CX";
         
@@ -534,7 +562,8 @@
             }
         });
 
-        // Application State
+        // Application State Management
+        let loginPortalMode = 'tester'; // 'tester' or 'admin'
         let currentUser = null;
         let gamesList = [];
         let membersList = [];
@@ -542,8 +571,9 @@
         let currentBlobUrl = null;
         let confirmResolver = null;
 
-        // 2. INITIALIZATION ON DOM LOAD
+        // 2. DOM INITIALIZATION
         document.addEventListener('DOMContentLoaded', () => {
+            // Restore active session from sessionStorage if present
             const savedUser = sessionStorage.getItem('pixel_lab_user');
             if (savedUser) {
                 try {
@@ -554,7 +584,7 @@
                 }
             }
 
-            // Mobile Menu Toggle
+            // Mobile Menu Drawer Handler
             const mobileBtn = document.getElementById('mobile-menu-toggle');
             const sidebar = document.getElementById('sidebar');
             if (mobileBtn && sidebar) {
@@ -564,7 +594,41 @@
             }
         });
 
-        // 3. AUTHENTICATION LOGIC
+        // 3. LOGIN PORTAL & AUTHENTICATION
+        function switchLoginTab(mode) {
+            loginPortalMode = mode;
+            const btnTester = document.getElementById('tab-login-tester');
+            const btnAdmin = document.getElementById('tab-login-admin');
+            const label = document.getElementById('passcode-label');
+            const badge = document.getElementById('portal-badge');
+            const input = document.getElementById('passcode-input');
+            const inputIcon = document.getElementById('login-input-icon');
+            const btnText = document.getElementById('login-btn-text');
+            const errorMsg = document.getElementById('login-error-message');
+
+            errorMsg.classList.add('hidden');
+            errorMsg.textContent = '';
+            input.value = '';
+
+            if (mode === 'tester') {
+                btnTester.className = 'flex-1 py-2.5 rounded-lg text-center transition-all bg-[#6366f1] text-white shadow-md';
+                btnAdmin.className = 'flex-1 py-2.5 rounded-lg text-center transition-all text-[#9ca3af] hover:text-[#f3f4f6]';
+                label.textContent = 'Tester Passcode';
+                badge.textContent = 'QA Member';
+                input.placeholder = 'Enter tester passcode';
+                inputIcon.className = 'fas fa-key text-sm';
+                btnText.textContent = 'Access Testing Lab';
+            } else {
+                btnAdmin.className = 'flex-1 py-2.5 rounded-lg text-center transition-all bg-[#6366f1] text-white shadow-md';
+                btnTester.className = 'flex-1 py-2.5 rounded-lg text-center transition-all text-[#9ca3af] hover:text-[#f3f4f6]';
+                label.textContent = 'Admin Key Passcode';
+                badge.textContent = 'Restricted Studio';
+                input.placeholder = 'Enter admin passcode';
+                inputIcon.className = 'fas fa-shield-halved text-sm';
+                btnText.textContent = 'Unlock Admin Portal';
+            }
+        }
+
         async function attemptLogin() {
             const passcodeInput = document.getElementById('passcode-input');
             const errorMsg = document.getElementById('login-error-message');
@@ -575,7 +639,7 @@
             errorMsg.textContent = '';
 
             if (!enteredCode) {
-                showLoginError("Please enter your membership passcode.");
+                showLoginError("Invalid, disabled, or expired membership passcode.");
                 return;
             }
 
@@ -586,7 +650,7 @@
                 // Query members table in Supabase
                 const { data, error } = await sbInstance
                     .from('members')
-                    .select('*')
+                    .select('name, is_admin, passcode')
                     .eq('passcode', enteredCode)
                     .maybeSingle();
 
@@ -595,17 +659,29 @@
                     return;
                 }
 
+                // If logging into Admin Portal, verify user has is_admin privileges
+                if (loginPortalMode === 'admin' && !data.is_admin) {
+                    showLoginError("Invalid, disabled, or expired membership passcode.");
+                    return;
+                }
+
                 // Successful Authentication
                 currentUser = data;
                 sessionStorage.setItem('pixel_lab_user', JSON.stringify(currentUser));
                 showDashboard();
-                showToast(`Welcome back, ${currentUser.name}!`, 'success');
+                showToast(`Welcome, ${currentUser.name}!`, 'success');
+
+                // If admin portal tab was used, auto-open Admin Studio
+                if (loginPortalMode === 'admin' && currentUser.is_admin) {
+                    setTimeout(() => openAdminModal(), 300);
+                }
             } catch (err) {
                 console.error("Login catch error:", err);
                 showLoginError("Invalid, disabled, or expired membership passcode.");
             } finally {
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = `<span>Access Testing Lab</span> <i class="fas fa-arrow-right text-xs"></i>`;
+                const btnText = loginPortalMode === 'admin' ? 'Unlock Admin Portal' : 'Access Testing Lab';
+                loginBtn.innerHTML = `<span id="login-btn-text">${btnText}</span> <i class="fas fa-arrow-right text-xs"></i>`;
             }
         }
 
@@ -628,28 +704,35 @@
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('passcode-input').value = '';
             document.getElementById('login-error-message').classList.add('hidden');
+            switchLoginTab('tester');
         }
 
-        // 4. DASHBOARD & GAME LOADING SYSTEM
+        // 4. DASHBOARD & GAME LOADING LOGIC
         function showDashboard() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard-screen').classList.remove('hidden');
 
-            // Set user profile info
-            document.getElementById('user-display-name').textContent = currentUser.name || 'Member';
+            // Render user profile info
+            document.getElementById('user-display-name').textContent = currentUser.name || 'QA Tester';
             
             const adminBadge = document.getElementById('admin-badge');
             const adminSidebarSec = document.getElementById('admin-sidebar-section');
+            const userRoleLabel = document.getElementById('user-role-label');
+            const userBadgeIcon = document.getElementById('user-badge-icon');
 
             if (currentUser.is_admin) {
                 adminBadge.classList.remove('hidden');
                 adminSidebarSec.classList.remove('hidden');
+                userRoleLabel.textContent = 'System Admin';
+                userBadgeIcon.className = 'fas fa-user-shield';
             } else {
                 adminBadge.classList.add('hidden');
                 adminSidebarSec.classList.add('hidden');
+                userRoleLabel.textContent = 'Authorized Member';
+                userBadgeIcon.className = 'fas fa-user-check';
             }
 
-            // Fetch live games from Supabase
+            // Fetch live games list from Supabase
             fetchGames();
         }
 
@@ -671,10 +754,10 @@
 
                 if (error) {
                     console.error("Error fetching games:", error);
-                    showToast("Error loading games from Supabase.", "error");
+                    showToast("Error fetching games from database.", "error");
                     gameListNav.innerHTML = `
                         <div class="p-3 text-center text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
-                            Failed to load games from database.
+                            Failed to load game builds.
                         </div>
                     `;
                     return;
@@ -685,15 +768,15 @@
 
                 renderSidebarGames();
 
-                // Auto-select first game if available and none selected yet
+                // Select first build by default if available
                 if (gamesList.length > 0 && !activeGame) {
                     selectGame(0);
                 } else if (gamesList.length === 0) {
                     resetIframeToEmpty();
                 }
             } catch (err) {
-                console.error("Fetch games error:", err);
-                showToast("Connection error while fetching builds.", "error");
+                console.error("Fetch games catch error:", err);
+                showToast("Connection error fetching builds.", "error");
             }
         }
 
@@ -704,8 +787,8 @@
                 gameListNav.innerHTML = `
                     <div class="p-4 text-center bg-[#0d0e12] border border-[#272a37] rounded-xl text-xs text-[#9ca3af]">
                         <i class="fas fa-folder-open text-2xl text-[#6366f1] mb-2 block"></i>
-                        <p class="font-medium text-[#f3f4f6] mb-1">No games uploaded yet.</p>
-                        <p class="text-[11px] text-[#9ca3af]">Admin can add games below.</p>
+                        <p class="font-medium text-[#f3f4f6] mb-1">No games available</p>
+                        <p class="text-[11px] text-[#9ca3af]">Admin can publish builds below.</p>
                     </div>
                 `;
                 return;
@@ -714,13 +797,16 @@
             gameListNav.innerHTML = gamesList.map((game, index) => {
                 const isActive = activeGame && activeGame.id === game.id;
                 const iconClass = game.source_type === 'html' ? 'fa-code' : 'fa-globe';
+                const dataSrcVal = game.source_type === 'html' ? `blob:game-${game.id}` : escapeHtml(game.source_content);
 
                 return `
                     <button 
+                        type="button"
+                        data-src="${dataSrcVal}"
                         onclick="selectGame(${index})"
-                        class="game-nav-btn ${isActive ? 'active' : ''} w-full p-3 rounded-xl border border-[#272a37] bg-[#161820] text-left flex items-center space-x-3 group text-xs font-medium"
+                        class="game-nav-btn ${isActive ? 'active' : ''} w-full p-3 rounded-xl border border-[#272a37] bg-[#161820] text-left flex items-center space-x-3 group text-xs font-medium cursor-pointer"
                     >
-                        <div class="icon-container w-8 h-8 rounded-lg bg-[#0d0e12] border border-[#272a37] flex items-center justify-center text-[#9ca3af] group-hover:text-[#6366f1] transition-colors">
+                        <div class="icon-container w-8 h-8 rounded-lg bg-[#0d0e12] border border-[#272a37] flex items-center justify-center text-[#9ca3af] group-hover:text-[#6366f1] transition-colors shrink-0">
                             <i class="fas ${iconClass}"></i>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -743,7 +829,7 @@
 
             const iframe = document.getElementById('game-iframe');
 
-            // Revoke old object URL if created
+            // Revoke old Object URL if created
             if (currentBlobUrl) {
                 URL.revokeObjectURL(currentBlobUrl);
                 currentBlobUrl = null;
@@ -762,7 +848,7 @@
         function resetIframeToEmpty() {
             activeGame = null;
             document.getElementById('active-game-title').textContent = 'No game active';
-            document.getElementById('active-game-path').textContent = 'Upload a game build in Admin Studio';
+            document.getElementById('active-game-path').textContent = 'Upload a build in Admin Studio';
             
             const iframe = document.getElementById('game-iframe');
             if (currentBlobUrl) {
@@ -773,13 +859,13 @@
             const emptyHtml = `
                 <!DOCTYPE html>
                 <html>
-                <head><script src="https://cdn.tailwindcss.com"></script></head>
+                <head><script src="https://cdn.tailwindcss.com"><\/script></head>
                 <body class="bg-[#161820] text-[#9ca3af] h-screen flex flex-col items-center justify-center p-6 text-center font-sans">
                     <div class="w-16 h-16 rounded-2xl bg-[#0d0e12] border border-[#272a37] flex items-center justify-center text-[#6366f1] text-2xl mb-4">
                         <i class="fas fa-gamepad"></i>
                     </div>
-                    <h2 class="text-base font-bold text-[#f3f4f6] mb-1">No Active Game Loaded</h2>
-                    <p class="text-xs max-w-sm">Use the Admin Studio to publish your custom HTML or URL game builds.</p>
+                    <h2 class="text-base font-bold text-[#f3f4f6] mb-1">No Active Game Build Loaded</h2>
+                    <p class="text-xs max-w-sm">Use the Admin Studio to publish standalone HTML or external URL game builds.</p>
                 </body>
                 </html>
             `;
@@ -788,10 +874,10 @@
             iframe.src = currentBlobUrl;
         }
 
-        // 5. ADMIN STUDIO LOGIC
+        // 5. ADMIN MANAGEMENT STUDIO LOGIC
         function openAdminModal() {
             if (!currentUser || !currentUser.is_admin) {
-                showToast("Admin access required.", "error");
+                showToast("Admin privileges required.", "error");
                 return;
             }
 
@@ -853,7 +939,7 @@
             const sourceContent = sourceType === 'html' ? htmlInput.value.trim() : urlInput.value.trim();
 
             if (!title || !sourceContent) {
-                showToast("Please provide both a title and content.", "error");
+                showToast("Provide both title and source content.", "error");
                 return;
             }
 
@@ -861,18 +947,16 @@
             submitBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>Publishing...</span>`;
 
             try {
-                const { data, error } = await sbInstance
+                const { error } = await sbInstance
                     .from('games')
                     .insert([{
                         title: title,
                         source_type: sourceType,
                         source_content: sourceContent
-                    }])
-                    .select();
+                    }]);
 
                 if (error) {
-                    console.error("Error inserting game:", error);
-                    showToast("Failed to save game build: " + error.message, "error");
+                    showToast("Failed to publish game: " + error.message, "error");
                     return;
                 }
 
@@ -885,7 +969,7 @@
                 renderAdminGamesList();
             } catch (err) {
                 console.error("Add game catch error:", err);
-                showToast("Error adding game to Supabase.", "error");
+                showToast("Error inserting game to Supabase.", "error");
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<i class="fas fa-upload"></i> <span>Publish Game Build</span>`;
@@ -903,7 +987,7 @@
             container.innerHTML = gamesList.map(game => `
                 <div class="p-3 bg-[#0d0e12] border border-[#272a37] rounded-xl flex items-center justify-between">
                     <div class="flex items-center space-x-3 overflow-hidden">
-                        <div class="w-8 h-8 rounded-lg bg-[#161820] border border-[#272a37] flex items-center justify-center text-[#6366f1] text-xs">
+                        <div class="w-8 h-8 rounded-lg bg-[#161820] border border-[#272a37] flex items-center justify-center text-[#6366f1] text-xs shrink-0">
                             <i class="fas ${game.source_type === 'html' ? 'fa-code' : 'fa-globe'}"></i>
                         </div>
                         <div class="overflow-hidden">
@@ -923,7 +1007,7 @@
         }
 
         async function confirmDeleteGame(gameId, title) {
-            const confirmed = await showConfirmModal("Delete Game Build", `Are you sure you want to delete "${title}"? This action cannot be undone.`);
+            const confirmed = await showConfirmModal("Delete Game Build", `Are you sure you want to delete "${title}"? This cannot be undone.`);
             if (!confirmed) return;
 
             try {
@@ -937,7 +1021,7 @@
                     return;
                 }
 
-                showToast("Game build deleted successfully.", "success");
+                showToast("Game build deleted.", "success");
                 if (activeGame && activeGame.id === gameId) {
                     activeGame = null;
                 }
@@ -946,7 +1030,7 @@
                 renderAdminGamesList();
             } catch (err) {
                 console.error("Delete game error:", err);
-                showToast("Error deleting game build.", "error");
+                showToast("Error deleting build from Supabase.", "error");
             }
         }
 
@@ -976,13 +1060,13 @@
                 container.innerHTML = membersList.map(member => `
                     <div class="p-3 bg-[#0d0e12] border border-[#272a37] rounded-xl flex items-center justify-between">
                         <div class="flex items-center space-x-3 overflow-hidden">
-                            <div class="w-8 h-8 rounded-lg bg-[#161820] border border-[#272a37] flex items-center justify-center text-[#6366f1] text-xs">
-                                <i class="fas fa-user-shield"></i>
+                            <div class="w-8 h-8 rounded-lg bg-[#161820] border border-[#272a37] flex items-center justify-center text-[#6366f1] text-xs shrink-0">
+                                <i class="fas ${member.is_admin ? 'fa-user-shield' : 'fa-user'}"></i>
                             </div>
                             <div class="overflow-hidden">
                                 <div class="flex items-center space-x-2">
                                     <p class="text-xs font-semibold text-[#f3f4f6] truncate">${escapeHtml(member.name)}</p>
-                                    ${member.is_admin ? '<span class="text-[9px] bg-[#6366f1]/20 text-[#6366f1] px-1.5 py-0.2 rounded font-bold uppercase">Admin</span>' : ''}
+                                    ${member.is_admin ? '<span class="text-[9px] bg-[#6366f1]/20 text-[#6366f1] border border-[#6366f1]/30 px-1.5 py-0.2 rounded font-bold uppercase">Admin</span>' : ''}
                                 </div>
                                 <p class="text-[10px] text-[#9ca3af] font-mono">Passcode: <span class="text-[#f3f4f6]">${escapeHtml(member.passcode)}</span></p>
                             </div>
@@ -1013,7 +1097,7 @@
             const isAdmin = adminCheckbox.checked;
 
             if (!name || !passcode) {
-                showToast("Please provide both name and passcode.", "error");
+                showToast("Provide both member name and passcode.", "error");
                 return;
             }
 
@@ -1021,21 +1105,20 @@
             submitBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>Creating...</span>`;
 
             try {
-                const { data, error } = await sbInstance
+                const { error } = await sbInstance
                     .from('members')
                     .insert([{
                         name: name,
                         passcode: passcode,
                         is_admin: isAdmin
-                    }])
-                    .select();
+                    }]);
 
                 if (error) {
                     showToast("Failed to create member: " + error.message, "error");
                     return;
                 }
 
-                showToast("Member account created successfully!", "success");
+                showToast("Member credential created!", "success");
                 nameInput.value = '';
                 passcodeInput.value = '';
                 adminCheckbox.checked = false;
@@ -1043,7 +1126,7 @@
                 fetchAndRenderMembers();
             } catch (err) {
                 console.error("Add member catch error:", err);
-                showToast("Error creating member in Supabase.", "error");
+                showToast("Error creating member credential.", "error");
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<i class="fas fa-check"></i> <span>Create Member Credential</span>`;
@@ -1051,7 +1134,7 @@
         }
 
         async function confirmDeleteMember(memberId, name) {
-            const confirmed = await showConfirmModal("Delete Member Account", `Are you sure you want to delete member account "${name}"?`);
+            const confirmed = await showConfirmModal("Delete Member Credential", `Are you sure you want to delete member account "${name}"?`);
             if (!confirmed) return;
 
             try {
@@ -1065,7 +1148,7 @@
                     return;
                 }
 
-                showToast("Member account deleted.", "success");
+                showToast("Member credential deleted.", "success");
                 fetchAndRenderMembers();
             } catch (err) {
                 console.error("Delete member error:", err);
@@ -1087,7 +1170,7 @@
                 } else {
                     iframe.src = activeGame.source_content;
                 }
-                showToast("Build reloaded", "info");
+                showToast("Canvas build reloaded", "info");
             }
         }
 
@@ -1127,7 +1210,7 @@
             }
         }
 
-        // Toast System
+        // Toast Notification System
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -1155,7 +1238,7 @@
             }, 3000);
         }
 
-        // Modal Confirm Dialog Helper
+        // Custom Confirm Dialog Modal
         function showConfirmModal(title, message) {
             return new Promise((resolve) => {
                 document.getElementById('confirm-title').textContent = title;
@@ -1174,6 +1257,7 @@
             }
         }
 
+        // HTML String Escaper to Prevent XSS and Syntax Breakdown
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
