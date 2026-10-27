@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Pixel Pet Shelter Game Exclusive Testing Lab</title>
+    <!-- Supabase Integration Client CDN -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        :root {
+            --bg-color: #0d0e12;
+            --panel-bg: #161820;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #272a37;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Login Screen Panels */
+        .login-container {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-container h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .login-container p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="password"]:focus {
+            border-color: var(--accent);
+        }
+
+        button {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 12px;
+            min-height: 18px;
+        }
+
+        /* Playground Dashboard View */
+        .dashboard-container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+            height: 85vh;
+        }
+
+        .sidebar {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .sidebar .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .game-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .game-btn {
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .game-btn:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+        }
+
+        .game-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 8px;
+            cursor: pointer;
+            margin-top: auto;
+        }
+
+        .logout-btn:hover {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        .playground {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .playground-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .playground-header h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .game-container {
+            flex-grow: 1;
+            background: #000;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .no-game-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .game-container {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN INTERFACE -->
+    <div id="loginScreen" class="login-container">
+        <h1>The Pixel Pet Shelter Game</h1>
+        <p>Exclusive Testing Lab</p>
+        <div class="input-group">
+            <label for="passcode">Active Membership Passcode</label>
+            <input type="password" id="passcode" placeholder="••••••••" onkeydown="if(event.key==='Enter') attemptLogin()">
+        </div>
+        <button onclick="attemptLogin()">Enter Lab</button>
+        <div id="errorMsg" class="error-msg"></div>
+    </div>
+          <!-- 2. LAB DASHBOARD (HIDDEN UNTIL VALIDATED) -->
+    <div id="labDashboard" class="dashboard-container hidden">
+        <aside class="sidebar">
+            <h2>Pixel Pet Shelter</h2>
+            <div class="subtitle">Testing Lab v2.0</div>
+            
+            <ul class="game-list">
+                <!-- ADMIN: Keep adding your HTML game files right here -->
+                <li><button class="game-btn" data-src="games/pet-shelter-alpha.html" onclick="loadGame(this)">Pet Shelter Alpha Build</button></li>
+                <li><button class="game-btn" data-src="games/minigame-fishing.html" onclick="loadGame(this)">Pet Fishing Minigame</button></li>
+                <li><button class="game-btn" data-src="games/ui-test.html" onclick="loadGame(this)">Shelter UI & Decor Test</button></li>
+            </ul>
+
+            <button class="logout-btn" onclick="logout()">Exit Lab</button>
+        </aside>
+
+        <main class="playground">
+            <div class="playground-header">
+                <h3 id="currentGameTitle">Select a test build from the sidebar</h3>
+            </div>
+            <div class="game-container">
+                <div id="placeholderText" class="no-game-placeholder">No build loaded. Click a game to start playing.</div>
+                <iframe id="gameFrame" class="hidden" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ADMIN CONFIGURATION: Update with your project configuration variables
+        const SUPABASE_URL = "https://supabase.com/dashboard/project/cizkvjhhrbxnhuptsbdj"; 
+        const SUPABASE_KEY = "sb_publishable_NhymEWLkENiapC-lGIm4Fg_DNYo33CX";
+
+        // Initialise Connection Client
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Keep users logged in during an active tab session
+        window.onload = function() {
+            if (sessionStorage.getItem("lab_authenticated") === "true") {
+                showDashboard();
+            }
+        }
+
+        async function attemptLogin() {
+            const enteredCode = document.getElementById("passcode").value;
+            const errorElement = document.getElementById("errorMsg");
+
+            if (!enteredCode) return;
+            errorElement.innerText = "Verifying membership data...";
+
+            try {
+                // Queries database. SQL RLS logic blocks expired/disabled profiles instantly
+                const { data, error } = await supabase
+                    .from('members')
+                    .select('name')
+                    .eq('passcode', enteredCode)
+                    .maybeSingle();
+
+                if (error || !data) {
+                    errorElement.innerText = "Invalid, disabled, or expired membership passcode.";
+                    document.getElementById("passcode").value = "";
+                    return;
+                }
+
+                // Authorisation Approved
+                sessionStorage.setItem("lab_authenticated", "true");
+                errorElement.innerText = "";
+                showDashboard();
+            } catch (err) {
+                errorElement.innerText = "Connection lost. Please try again.";
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById("loginScreen").classList.add("hidden");
+            document.getElementById("labDashboard").classList.remove("hidden");
+        }
+
+        function loadGame(buttonElement) {
+            document.querySelectorAll('.game-btn').forEach(btn => btn.classList.remove('active'));
+            buttonElement.classList.add('active');
+
+            const gameSrc = buttonElement.getAttribute('data-src');
+            const gameTitle = buttonElement.innerText;
+
+            const frame = document.getElementById("gameFrame");
+            const placeholder = document.getElementById("placeholderText");
+
+            document.getElementById("currentGameTitle").innerText = gameTitle;
+
+            placeholder.classList.add("hidden");
+            frame.classList.remove("hidden");
+            frame.src = gameSrc;
+        }
+
+        function logout() {
+            sessionStorage.removeItem("lab_authenticated");
+            document.getElementById("gameFrame").src = "";
+            document.getElementById("gameFrame").classList.add("hidden");
+            document.getElementById("placeholderText").classList.remove("hidden");
+            document.getElementById("currentGameTitle").innerText = "Select a test build from the sidebar";
+            document.getElementById("passcode").value = "";
+
+            document.getElementById("labDashboard").classList.add("hidden");
+            document.getElementById("loginScreen").classList.remove("hidden");
+        }
+    </script>
+</body>
+</html>
+
