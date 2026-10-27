@@ -290,12 +290,19 @@
     </div>
 
     <script>
-        // ADMIN CONFIGURATION: Update with your project configuration variables
-        const SUPABASE_URL = "https://supabase.com/dashboard/project/cizkvjhhrbxnhuptsbdj"; 
-        const SUPABASE_KEY = "sb_publishable_NhymEWLkENiapC-lGIm4Fg_DNYo33CX";
+        // REPLACE YOUR SCRIPTS BLOCKS DEFINITIONS WITH THIS UPDATED WRAPPER
+const SUPABASE_URL = "https://cizkvjhhrbxnhuptsbdj.supabase.co"; // Match from your screen!
+const SUPABASE_KEY = "sb_publishable_NhymEWLkENiapC-lGIm4Fg_DNYo33CX"; // Keep your exact code string here
 
-        // Initialise Connection Client
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Fix for 2026 publishable key headers
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  global: {
+    headers: {
+      'apikey': SUPABASE_KEY
+    }
+  }
+});
+
 
         // Keep users logged in during an active tab session
         window.onload = function() {
